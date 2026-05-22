@@ -1,25 +1,29 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+import os
+import uuid
+
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
+UPLOAD_DIR = "./uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-class Item(BaseModel):
+
+@app.post("/upload-file")
+async def upload_file(file: UploadFile = File(...)):
     """
-    数据模型：
-    - name: 数据名称
-    - value: 数据数值
+    文件上传接口：
+    - 仅接收 CSV 文件
+    - 保存到本地 UPLOAD_DIR
+    - 返回上传确认信息
     """
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        return JSONResponse(status_code=400, content={"error": "Only CSV files are allowed"})
 
-    name: str
-    value: int
+    filename = f"{uuid.uuid4()}_{file.filename}"
+    file_location = os.path.join(UPLOAD_DIR, filename)
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
 
-
-@app.post("/upload")
-async def upload_item(item: Item):
-    """
-    上传数据接口：
-    接收 Item 数据并返回确认消息和原始数据
-    """
-
-    return {"message": "Data received", "data": item.dict()}
+    return {"filename": filename, "message": "File uploaded successfully"}
