@@ -3,18 +3,21 @@ from __future__ import annotations
 
 import argparse
 import re
-from collections import Counter
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-SENTIMENT_ORDER = ["POS", "NEG", "NEU"]
-ENTITY_ORDER = ["PER", "ORG", "LOC", "TIME"]
-ENTITY_PATTERN = re.compile(r"(PER|ORG|LOC|TIME)\s*[:：]\s*([^,，;；|]+)")
-BIO_PATTERN = re.compile(r"\((B|I|O)(?:-([A-Z]+))?\)")
+from scripts.utils import (
+    extract_bio_matrix,
+    extract_entity_counts,
+    plot_bio_heatmap,
+    plot_entity_bar,
+    plot_sentiment_hist,
+)
 
+SENTIMENT_ORDER = ["POS", "NEG", "NEU"]
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Day 4 标注数据可视化脚本")
@@ -41,29 +44,6 @@ def extract_sentiment_counts(df: pd.DataFrame, label_col: str) -> pd.Series:
     labels = df[label_col].fillna("").astype(str).str.upper()
     counts = pd.Series({lb: labels.str.contains(rf"\b{lb}\b").sum() for lb in SENTIMENT_ORDER}, dtype="int64")
     return counts
-
-
-def extract_entity_counts(df: pd.DataFrame, label_col: str) -> pd.Series:
-    counter: Counter[str] = Counter()
-    for text in df[label_col].fillna("").astype(str):
-        for key, _ in ENTITY_PATTERN.findall(text):
-            counter[key] += 1
-    return pd.Series({key: counter.get(key, 0) for key in ENTITY_ORDER}, dtype="int64")
-
-
-def extract_bio_matrix(df: pd.DataFrame, label_col: str) -> pd.DataFrame:
-    bio_counter: dict[str, Counter[str]] = {prefix: Counter() for prefix in ["B", "I", "O"]}
-    for text in df[label_col].fillna("").astype(str):
-        for prefix, entity_type in BIO_PATTERN.findall(text):
-            normalized = entity_type if entity_type else "NONE"
-            bio_counter[prefix][normalized] += 1
-
-    all_types = sorted({etype for c in bio_counter.values() for etype in c.keys()}) or ["NONE"]
-    matrix = pd.DataFrame(index=["B", "I", "O"], columns=all_types, data=0)
-    for prefix, counts in bio_counter.items():
-        for etype, value in counts.items():
-            matrix.loc[prefix, etype] = value
-    return matrix.astype(int)
 
 
 def plot_sentiment_hist(counts: pd.Series, output_dir: Path) -> None:
