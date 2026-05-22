@@ -20,7 +20,10 @@ from typing import Iterable
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from day11_text_metrics import TextMetrics
+try:
+    from scripts.day11_text_metrics import TextMetrics
+except ModuleNotFoundError:
+    from day11_text_metrics import TextMetrics
 
 METRIC_COLUMNS: list[str] = [
     "rouge_1",

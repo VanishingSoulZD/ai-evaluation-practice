@@ -16,7 +16,7 @@ try:
     from scripts.day11_text_metrics import TextMetrics
     from scripts.day12_metrics_report import build_metrics_report
 except ModuleNotFoundError:
-    repo_root = Path(__file__).resolve().parent
+    repo_root = Path(__file__).resolve().parent.parent
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))
     from scripts.day11_text_metrics import TextMetrics
