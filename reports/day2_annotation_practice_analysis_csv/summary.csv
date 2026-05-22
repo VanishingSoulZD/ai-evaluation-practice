@@ -1,0 +1,7 @@
+metric,value
+total_samples,50
+missing_cells,0
+duplicate_id_samples,0
+duplicate_text_samples,0
+ner_inconsistency_cases,0
+bio_invalid_cases,0
