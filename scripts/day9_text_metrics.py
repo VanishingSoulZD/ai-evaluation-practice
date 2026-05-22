@@ -86,6 +86,8 @@ def accuracy(y_true: list[int], y_pred: list[int]) -> float:
 
 
 def win_rate(wins: int, losses: int, ties: int = 0, half_tie: bool = True) -> float:
+    if wins < 0 or losses < 0 or ties < 0:
+        raise ValueError("wins, losses, ties must be >= 0")
     total = wins + losses + ties
     if total == 0:
         return 0.0
