@@ -5,6 +5,7 @@ import pandas as pd
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 
+from tasks import compute_metrics_task
 from week2_metrics import MetricsCalculator
 
 app = FastAPI()
@@ -50,3 +51,30 @@ async def batch_metrics(file: UploadFile = File(...)):
         results.append(calculator.compute(row.to_dict()))
 
     return {"filename": file.filename, "metrics": results}
+
+
+@app.post("/batch-metrics-async")
+async def batch_metrics_async(file: UploadFile = File(...)):
+    """异步批量指标计算接口。"""
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        return JSONResponse(status_code=400, content={"error": "Only CSV files are allowed"})
+
+    filename = f"{uuid.uuid4()}_{file.filename}"
+    file_location = os.path.join(UPLOAD_DIR, filename)
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+
+    task = compute_metrics_task.delay(file_location)
+    return {"task_id": task.id, "message": "Task submitted successfully"}
+
+
+@app.get("/tasks/{task_id}")
+def get_task_status(task_id: str):
+    """查询异步任务状态（非阻塞）。"""
+    result = compute_metrics_task.AsyncResult(task_id)
+
+    response = {"task_id": task_id, "status": result.status}
+    if result.status == "FAILURE":
+        response["error"] = str(result.result)
+
+    return response
