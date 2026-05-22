@@ -1,8 +1,11 @@
 import os
 import uuid
 
+import pandas as pd
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
+
+from week2_metrics import MetricsCalculator
 
 app = FastAPI()
 
@@ -27,3 +30,23 @@ async def upload_file(file: UploadFile = File(...)):
         f.write(await file.read())
 
     return {"filename": filename, "message": "File uploaded successfully"}
+
+
+@app.post("/batch-metrics")
+async def batch_metrics(file: UploadFile = File(...)):
+    """批量指标计算接口。"""
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        return JSONResponse(status_code=400, content={"error": "Only CSV files are allowed"})
+
+    file_location = os.path.join(UPLOAD_DIR, file.filename)
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+
+    df = pd.read_csv(file_location)
+
+    calculator = MetricsCalculator()
+    results = []
+    for _, row in df.iterrows():
+        results.append(calculator.compute(row.to_dict()))
+
+    return {"filename": file.filename, "metrics": results}
