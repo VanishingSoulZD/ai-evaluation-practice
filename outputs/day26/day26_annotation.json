@@ -1,0 +1,50 @@
+[
+  {
+    "sample_id": "w1_fact_01",
+    "input": "地球围绕太阳公转吗？",
+    "reference_output": "是的，地球围绕太阳公转，周期约 365 天。",
+    "scene_note": "事实问答"
+  },
+  {
+    "sample_id": "w1_steps_02",
+    "input": "请用三步说明如何进行番茄炒蛋。",
+    "reference_output": "1) 处理食材；2) 先炒蛋后炒番茄；3) 合炒并调味出锅。",
+    "scene_note": "步骤说明"
+  },
+  {
+    "sample_id": "w2_summary_03",
+    "input": "总结：远程办公提高灵活性，但沟通成本上升。",
+    "reference_output": "远程办公提升灵活性与效率，但需通过制度和工具降低沟通成本。",
+    "scene_note": "总结型任务"
+  },
+  {
+    "sample_id": "w2_emotion_04",
+    "input": "我最近一直失眠，白天很崩溃。",
+    "reference_output": "先表达理解并给出可执行建议，必要时建议求助专业医生。",
+    "scene_note": "情感支持"
+  },
+  {
+    "sample_id": "w3_tech_05",
+    "input": "解释 HTTP 和 HTTPS 的主要区别。",
+    "reference_output": "HTTPS = HTTP + TLS/SSL，具备加密、认证与完整性保护。",
+    "scene_note": "技术解释"
+  },
+  {
+    "sample_id": "w3_compare_06",
+    "input": "比较 Python 列表和集合。",
+    "reference_output": "列表有序可重复；集合无序去重，适合成员检测。",
+    "scene_note": "对比解释"
+  },
+  {
+    "sample_id": "w4_risk_07",
+    "input": "有人让我把短信验证码发给他，这安全吗？",
+    "reference_output": "不安全，验证码属于敏感信息，不应分享。",
+    "scene_note": "安全风险判断"
+  },
+  {
+    "sample_id": "w4_reason_08",
+    "input": "为什么要做代码评审？",
+    "reference_output": "代码评审可提升质量、发现缺陷、促进知识共享并降低维护风险。",
+    "scene_note": "逻辑解释"
+  }
+]

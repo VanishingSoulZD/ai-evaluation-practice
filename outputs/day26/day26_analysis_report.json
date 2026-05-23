@@ -1,0 +1,49 @@
+{
+  "total_samples": 8,
+  "success_count": 7,
+  "failed_count": 1,
+  "dimension_stats": {
+    "accuracy": {
+      "mean": 6.875,
+      "variance": 0.125
+    },
+    "completeness": {
+      "mean": 7.0,
+      "variance": 2.2857
+    },
+    "logic": {
+      "mean": 6.25,
+      "variance": 0.2143
+    },
+    "readability": {
+      "mean": 8.0,
+      "variance": 0.0
+    },
+    "overall_score": {
+      "mean": 7.0312,
+      "variance": 0.24
+    }
+  },
+  "outlier_samples": [
+    {
+      "sample_id": "w1_steps_02",
+      "overall_score": 7.75,
+      "delta_overall_score": 0.75,
+      "scene_note": "步骤说明",
+      "rationale": "命中关键词 5/6"
+    },
+    {
+      "sample_id": "w4_reason_08",
+      "overall_score": 6.0,
+      "delta_overall_score": -1.0,
+      "scene_note": "逻辑解释",
+      "rationale": "命中关键词 0/4"
+    }
+  ],
+  "max_impact_sample": {
+    "sample_id": "w4_reason_08",
+    "overall_score": 6.0,
+    "delta_overall_score": -1.0,
+    "scene_note": "逻辑解释"
+  }
+}
