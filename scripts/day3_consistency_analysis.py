@@ -226,8 +226,7 @@ def main() -> None:
         for lb, cnt in sentiments.items()
     ]
 
-    stem = a.input_file.stem
-    csv_dir = a.output_dir / f"{stem}_analysis_csv"
+    csv_dir = a.output_dir / "day3_consistency_analysis"
     csv_dir.mkdir(parents=True, exist_ok=True)
     write_csv(csv_dir / "summary.csv", summary)
     write_csv(csv_dir / "missing_stats.csv", missing_stats)
@@ -237,7 +236,7 @@ def main() -> None:
     write_csv(csv_dir / "bio_issues.csv", bio_issues)
     write_csv(csv_dir / "anomaly_list.csv", anomaly_list)
 
-    excel_path = a.output_dir / f"{stem}_analysis_report.xlsx"
+    excel_path = csv_dir / "consistency_analysis_report.xlsx"
     if Workbook is not None:
         wb = Workbook()
         wb.active.title = "summary"
@@ -269,4 +268,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # uv run python -m scripts.day3_consistency_analysis data/day02_annotation.csv
+    # uv run python -m scripts.day3_consistency_analysis data/day02_annotation.xlsx
     main()
