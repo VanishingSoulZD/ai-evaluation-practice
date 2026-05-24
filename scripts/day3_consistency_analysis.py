@@ -43,7 +43,12 @@ def load_records(path: Path) -> list[dict[str, Any]]:
         headers = [str(h) if h is not None else "" for h in rows[0]]
         out = []
         for r in rows[1:]:
-            out.append({headers[i]: ("" if r[i] is None else str(r[i])) for i in range(len(headers))})
+            out.append(
+                {
+                    headers[i]: ("" if r[i] is None else str(r[i]))
+                    for i in range(len(headers))
+                }
+            )
         return out
     raise ValueError("仅支持 CSV / Excel")
 
@@ -131,7 +136,14 @@ def main() -> None:
         if bio_tags:
             ok, reason = validate_bio(bio_tags)
             if not ok:
-                bio_issues.append({"id": row[a.id_col], "text": row[a.text_col], "issue": "BIO 序列不合法", "reason": reason})
+                bio_issues.append(
+                    {
+                        "id": row[a.id_col],
+                        "text": row[a.text_col],
+                        "issue": "BIO 序列不合法",
+                        "reason": reason,
+                    }
+                )
 
     dup_id = {k for k, v in id_counter.items() if v > 1}
     dup_text = {k for k, v in text_counter.items() if v > 1}
@@ -145,37 +157,72 @@ def main() -> None:
         if any((v is None or str(v).strip() == "") for v in row.values()):
             reasons.append("存在缺失值")
         if reasons:
-            anomaly_list.append({"id": row[a.id_col], "task_type": row[a.task_col], "text": row[a.text_col], "issue": "；".join(reasons)})
+            anomaly_list.append(
+                {
+                    "id": row[a.id_col],
+                    "task_type": row[a.task_col],
+                    "text": row[a.text_col],
+                    "issue": "；".join(reasons),
+                }
+            )
 
     ner_inconsistency = []
     for text, rows in entities_by_text.items():
         uniq = {tuple(sorted(ent)) for _, ent in rows}
         if len(uniq) > 1:
-            ner_inconsistency.append({
-                "text": text,
-                "sample_ids": ", ".join(i for i, _ in rows),
-                "entity_variants": " | ".join(str(u) for u in sorted(uniq)),
-                "issue": "同文本存在不同实体标注",
-            })
+            ner_inconsistency.append(
+                {
+                    "text": text,
+                    "sample_ids": ", ".join(i for i, _ in rows),
+                    "entity_variants": " | ".join(str(u) for u in sorted(uniq)),
+                    "issue": "同文本存在不同实体标注",
+                }
+            )
 
     summary = [
         {"metric": "total_samples", "value": total},
         {"metric": "missing_cells", "value": sum(missing_by_col.values())},
-        {"metric": "duplicate_id_samples", "value": sum(1 for v in id_counter.values() if v > 1)},
-        {"metric": "duplicate_text_samples", "value": sum(1 for v in text_counter.values() if v > 1)},
+        {
+            "metric": "duplicate_id_samples",
+            "value": sum(1 for v in id_counter.values() if v > 1),
+        },
+        {
+            "metric": "duplicate_text_samples",
+            "value": sum(1 for v in text_counter.values() if v > 1),
+        },
         {"metric": "ner_inconsistency_cases", "value": len(ner_inconsistency)},
         {"metric": "bio_invalid_cases", "value": len(bio_issues)},
     ]
     missing_stats = [
-        {"column": c, "missing_count": n, "missing_ratio": round(n / total, 4) if total else 0}
+        {
+            "column": c,
+            "missing_count": n,
+            "missing_ratio": round(n / total, 4) if total else 0,
+        }
         for c, n in missing_by_col.items()
     ]
     duplicate_stats = [
-        {"metric": "duplicate_id", "count": sum(1 for v in id_counter.values() if v > 1), "ratio": round((sum(1 for v in id_counter.values() if v > 1) / total), 4) if total else 0},
-        {"metric": "duplicate_text", "count": sum(1 for v in text_counter.values() if v > 1), "ratio": round((sum(1 for v in text_counter.values() if v > 1) / total), 4) if total else 0},
+        {
+            "metric": "duplicate_id",
+            "count": sum(1 for v in id_counter.values() if v > 1),
+            "ratio": round((sum(1 for v in id_counter.values() if v > 1) / total), 4)
+            if total
+            else 0,
+        },
+        {
+            "metric": "duplicate_text",
+            "count": sum(1 for v in text_counter.values() if v > 1),
+            "ratio": round((sum(1 for v in text_counter.values() if v > 1) / total), 4)
+            if total
+            else 0,
+        },
     ]
     sentiment_distribution = [
-        {"label": lb, "count": cnt, "ratio": round(cnt / sum(sentiments.values()), 4) if sentiments else 0}
+        {
+            "label": lb,
+            "count": cnt,
+            "ratio": round(cnt / sum(sentiments.values()), 4) if sentiments else 0,
+        }
         for lb, cnt in sentiments.items()
     ]
 

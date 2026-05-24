@@ -1,4 +1,5 @@
 import pandas as pd
+from pathlib import Path
 
 # ---------- Day 2 标注完整数据 ----------
 data = [
@@ -354,15 +355,15 @@ data = [
     },
 ]
 
+Path("data").mkdir(parents=True, exist_ok=True)
+
 # ---------- DataFrame ----------
 df = pd.DataFrame(data)
 
 # ---------- 保存 CSV ----------
-df.to_csv("day2_annotation_practice.csv", index=False, encoding="utf-8-sig")
-
+df.to_csv("data/day02_annotation.csv", index=False, encoding="utf-8-sig")
 # ---------- 保存 Excel ----------
-df.to_excel("day2_annotation_practice.xlsx", index=False)
-
+df.to_excel("data/day02_annotation.xlsx", index=False)
 print(
-    "CSV 和 Excel 文件已生成，文件名分别为 day2_annotation_practice.csv 和 day2_annotation_practice.xlsx"
+    "CSV 和 Excel 文件已生成，文件名分别为 data/day02_annotation.csv 和 data/day02_annotation.xlsx"
 )
