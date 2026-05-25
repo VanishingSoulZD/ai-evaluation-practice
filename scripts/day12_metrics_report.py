@@ -37,7 +37,9 @@ METRIC_COLUMNS: list[str] = [
 ]
 
 
-def normalize_metrics_input(metrics: dict[str, float] | Iterable[dict[str, float]]) -> pd.DataFrame:
+def normalize_metrics_input(
+    metrics: dict[str, float] | Iterable[dict[str, float]],
+) -> pd.DataFrame:
     """Normalize metrics into a DataFrame with stable column order.
 
     Parameters
@@ -69,14 +71,21 @@ def normalize_metrics_input(metrics: dict[str, float] | Iterable[dict[str, float
     return df.astype(float)
 
 
-def save_metrics_csv(df: pd.DataFrame, output_csv: str | Path = "day12_metrics_report.csv") -> Path:
+def save_metrics_csv(
+    df: pd.DataFrame,
+    output_csv: str | Path = "reports/day12_metrics_report/day12_metrics_report.csv",
+) -> Path:
     """Save metrics DataFrame to CSV."""
     output_path = Path(output_csv)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False)
     return output_path
 
 
-def plot_metrics(df: pd.DataFrame, output_png: str | Path = "day12_metrics_report.png") -> Path:
+def plot_metrics(
+    df: pd.DataFrame,
+    output_png: str | Path = "reports/day12_metrics_report/day12_metrics_report.png",
+) -> Path:
     """Render metrics chart for single or multiple samples.
 
     - Single sample: bar chart (x=metric names, y=metric value)
@@ -84,6 +93,7 @@ def plot_metrics(df: pd.DataFrame, output_png: str | Path = "day12_metrics_repor
     - Empty sample: placeholder chart with axis and hint text
     """
     output_path = Path(output_png)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(12, 6))
 
     if df.empty:
@@ -127,8 +137,8 @@ def plot_metrics(df: pd.DataFrame, output_png: str | Path = "day12_metrics_repor
 
 def build_metrics_report(
     metrics: dict[str, float] | Iterable[dict[str, float]],
-    output_csv: str | Path = "day12_metrics_report.csv",
-    output_png: str | Path = "day12_metrics_report.png",
+    output_csv: str | Path = "reports/day12_metrics_report/day12_metrics_report.csv",
+    output_png: str | Path = "reports/day12_metrics_report/day12_metrics_report.png",
 ) -> tuple[pd.DataFrame, Path, Path]:
     """Build Day 12 report artifacts from metric dictionaries."""
     df = normalize_metrics_input(metrics)
@@ -162,4 +172,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # uv run python -m scripts.day12_metrics_report
     main()

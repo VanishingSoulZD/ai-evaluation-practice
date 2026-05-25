@@ -1,0 +1,2 @@
+rouge_1,rouge_2,rouge_l,bleu_1,bleu_2,accuracy,win_rate_half_tie,win_rate_no_tie_credit
+0.6,0.25,0.4,0.6,0.3872983346207417,1.0,0.8,0.7

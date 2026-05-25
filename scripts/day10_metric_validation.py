@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from math import sqrt
 
-from day9_text_metrics import accuracy, bleu, rouge_l, rouge_n, win_rate
+from scripts.day9_text_metrics import accuracy, bleu, rouge_l, rouge_n, win_rate
 
 
 def fmt(x: float) -> str:
@@ -64,7 +64,9 @@ def run_boundary_checks() -> None:
     ]
 
     for name, got, exp in checks:
-        print(f"{name}\tgot={fmt(got)}\texpected={fmt(exp)}\tdelta={fmt(abs(got-exp))}")
+        print(
+            f"{name}\tgot={fmt(got)}\texpected={fmt(exp)}\tdelta={fmt(abs(got - exp))}"
+        )
 
     exception_cases = [
         ("rouge_n('a', 'a', 0)", lambda: rouge_n("a", "a", 0), ValueError),
@@ -89,4 +91,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # uv run python -m scripts.day10_metric_validation
     main()

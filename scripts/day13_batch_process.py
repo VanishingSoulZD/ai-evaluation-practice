@@ -162,7 +162,9 @@ def load_batches(input_dir: Path | None) -> list[list[dict[str, Any]]]:
     return batches
 
 
-def process_batch(batch: list[dict[str, Any]], batch_idx: int, logger: logging.Logger) -> tuple[list[dict[str, float]], int]:
+def process_batch(
+    batch: list[dict[str, Any]], batch_idx: int, logger: logging.Logger
+) -> tuple[list[dict[str, float]], int]:
     metrics_list: list[dict[str, float]] = []
     skipped = 0
     for sample_idx, sample in enumerate(batch):
@@ -176,7 +178,9 @@ def process_batch(batch: list[dict[str, Any]], batch_idx: int, logger: logging.L
     return metrics_list, skipped
 
 
-def run_batch_pipeline(input_dir: Path | None, output_dir: Path, warn_log: Path | None = None) -> None:
+def run_batch_pipeline(
+    input_dir: Path | None, output_dir: Path, warn_log: Path | None = None
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger("day13_batch_process")
     logger.handlers.clear()
@@ -205,11 +209,15 @@ def run_batch_pipeline(input_dir: Path | None, output_dir: Path, warn_log: Path 
         _, csv_out, png_out = build_metrics_report(metrics_list, csv_path, png_path)
         print(f"[OK] batch {i}: csv={csv_out} png={png_out}")
 
-    print(f"[INFO] total batches={len(batches)}, total samples={total_samples}, total skipped={total_skipped}")
+    print(
+        f"[INFO] total batches={len(batches)}, total samples={total_samples}, total skipped={total_skipped}"
+    )
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Day 13 batch processor for TextMetrics reports")
+    parser = argparse.ArgumentParser(
+        description="Day 13 batch processor for TextMetrics reports"
+    )
     parser.add_argument(
         "--input-dir",
         type=Path,
@@ -237,4 +245,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # uv run python -m scripts.day13_batch_process
     main()
