@@ -1,0 +1,27 @@
+{
+  "unique_numbers": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "squares": [
+    1,
+    4,
+    9,
+    25,
+    64
+  ],
+  "num_map": {
+    "1": 1,
+    "2": 4,
+    "3": 9,
+    "5": 25,
+    "8": 64
+  },
+  "normalized_text": "python_data_processing_day6",
+  "vowel_count": 7,
+  "sum_even_numbers": 10,
+  "scale_demo": 30
+}

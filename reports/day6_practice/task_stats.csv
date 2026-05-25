@@ -1,0 +1,4 @@
+﻿task_group,samples,avg_text_len,sentiment_rows,key
+分类,23,15.26086956521739,23,1
+实体,15,17.8,0,1
+其他,12,12.833333333333334,0,1
