@@ -65,7 +65,9 @@ def bleu(reference: str, candidate: str, max_n: int = 2) -> float:
         if total == 0:
             return 0.0
         ref_counts = Counter(ngrams(ref_tokens, n))
-        matched = sum(min(count, ref_counts[gram]) for gram, count in cand_counts.items())
+        matched = sum(
+            min(count, ref_counts[gram]) for gram, count in cand_counts.items()
+        )
         precisions.append(matched / total)
 
     if not precisions or min(precisions) == 0:
@@ -113,7 +115,9 @@ def compute_demo_metrics() -> dict[str, float]:
     }
 
 
-def optional_library_validation(reference: str, candidate: str) -> tuple[dict[str, float], list[str]]:
+def optional_library_validation(
+    reference: str, candidate: str
+) -> tuple[dict[str, float], list[str]]:
     results: dict[str, float] = {}
     notes: list[str] = []
 
@@ -123,8 +127,12 @@ def optional_library_validation(reference: str, candidate: str) -> tuple[dict[st
             sentence_bleu = getattr(nltk_bleu, "sentence_bleu")
             ref_tokens = tokenize(reference)
             cand_tokens = tokenize(candidate)
-            results["lib_nltk_bleu_1"] = sentence_bleu([ref_tokens], cand_tokens, weights=(1, 0, 0, 0))
-            results["lib_nltk_bleu_2"] = sentence_bleu([ref_tokens], cand_tokens, weights=(0.5, 0.5, 0, 0))
+            results["lib_nltk_bleu_1"] = sentence_bleu(
+                [ref_tokens], cand_tokens, weights=(1, 0, 0, 0)
+            )
+            results["lib_nltk_bleu_2"] = sentence_bleu(
+                [ref_tokens], cand_tokens, weights=(0.5, 0.5, 0, 0)
+            )
         except Exception as exc:
             notes.append(f"nltk_available_but_unusable: {exc.__class__.__name__}")
     else:
@@ -133,13 +141,17 @@ def optional_library_validation(reference: str, candidate: str) -> tuple[dict[st
     if importlib.util.find_spec("rouge_score") is not None:
         try:
             rouge_scorer = importlib.import_module("rouge_score.rouge_scorer")
-            scorer = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL"], use_stemmer=False)
+            scorer = rouge_scorer.RougeScorer(
+                ["rouge1", "rouge2", "rougeL"], use_stemmer=False
+            )
             score = scorer.score(reference, candidate)
             results["lib_rouge_score_rouge1_recall"] = score["rouge1"].recall
             results["lib_rouge_score_rouge2_recall"] = score["rouge2"].recall
             results["lib_rouge_score_rougeL_recall"] = score["rougeL"].recall
         except Exception as exc:
-            notes.append(f"rouge_score_available_but_unusable: {exc.__class__.__name__}")
+            notes.append(
+                f"rouge_score_available_but_unusable: {exc.__class__.__name__}"
+            )
     else:
         notes.append("rouge_score_not_installed")
 
@@ -174,7 +186,9 @@ def main() -> None:
 
     lib_results, lib_notes = optional_library_validation(ref, cand)
     if lib_results:
-        print("LIB_VALIDATION|status=enabled|note=library_results_are_for_cross_check_only")
+        print(
+            "LIB_VALIDATION|status=enabled|note=library_results_are_for_cross_check_only"
+        )
         for key, value in lib_results.items():
             print(f"LIB_METRIC|{key}|{value:.6f}")
     else:
@@ -185,4 +199,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # uv run python -m scripts.day9_text_metrics
     main()
