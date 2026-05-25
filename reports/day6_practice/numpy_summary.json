@@ -1,0 +1,40 @@
+{
+  "array_shape": [
+    50
+  ],
+  "slice_first_5": [
+    15,
+    18,
+    13,
+    16,
+    17
+  ],
+  "broadcast_plus_five_first_5": [
+    20,
+    23,
+    18,
+    21,
+    22
+  ],
+  "mask_long_text_count": 28,
+  "aggregations": {
+    "sum": 772,
+    "mean": 15.44,
+    "max": 22,
+    "min": 10
+  },
+  "vector_add_demo_first_5": [
+    16,
+    19,
+    14,
+    17,
+    18
+  ],
+  "normalized_first_5": [
+    -0.1402,
+    0.8158,
+    -0.7776,
+    0.1785,
+    0.4971
+  ]
+}

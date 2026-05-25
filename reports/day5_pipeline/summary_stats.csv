@@ -1,0 +1,12 @@
+﻿metric,value
+total_samples,50
+missing_cells,0
+duplicate_id_rows,0
+duplicate_text_rows,0
+sentiment_POS,8
+sentiment_NEG,6
+sentiment_NEU,9
+entity_PER,12
+entity_ORG,12
+entity_LOC,13
+entity_TIME,13
