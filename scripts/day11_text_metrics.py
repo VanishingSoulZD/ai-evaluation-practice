@@ -110,7 +110,9 @@ class TextMetrics:
         ref_total = sum(ref_counts.values())
         if ref_total == 0:
             return 0.0
-        overlap = sum(min(count, cand_counts[gram]) for gram, count in ref_counts.items())
+        overlap = sum(
+            min(count, cand_counts[gram]) for gram, count in ref_counts.items()
+        )
         return overlap / ref_total
 
     @staticmethod
@@ -133,7 +135,9 @@ class TextMetrics:
         ref_tokens = self.tokenize(self.reference)
         if not ref_tokens:
             return 0.0
-        return self.lcs_length(ref_tokens, self.tokenize(self.candidate)) / len(ref_tokens)
+        return self.lcs_length(ref_tokens, self.tokenize(self.candidate)) / len(
+            ref_tokens
+        )
 
     def compute_bleu(self, max_n: int) -> float:
         """Compute BLEU score up to ``max_n`` n-gram precision.
@@ -159,7 +163,9 @@ class TextMetrics:
             if total == 0:
                 return 0.0
             ref_counts = Counter(self.ngrams(ref_tokens, n))
-            matched = sum(min(count, ref_counts[gram]) for gram, count in cand_counts.items())
+            matched = sum(
+                min(count, ref_counts[gram]) for gram, count in cand_counts.items()
+            )
             precisions.append(matched / total)
 
         if not precisions or min(precisions) == 0:
@@ -182,7 +188,9 @@ class TextMetrics:
             raise ValueError("y_true and y_pred must have same length")
         if not self.y_true:
             return 0.0
-        return sum(int(t == p) for t, p in zip(self.y_true, self.y_pred)) / len(self.y_true)
+        return sum(int(t == p) for t, p in zip(self.y_true, self.y_pred)) / len(
+            self.y_true
+        )
 
     def compute_win_rate(self, half_tie: bool = True) -> float:
         """Compute win rate with optional half-tie credit.
@@ -218,7 +226,9 @@ class TextMetrics:
         }
 
     @staticmethod
-    def validate_with_optional_libraries(reference: str, candidate: str) -> tuple[dict[str, float], list[str]]:
+    def validate_with_optional_libraries(
+        reference: str, candidate: str
+    ) -> tuple[dict[str, float], list[str]]:
         """Optionally validate BLEU/ROUGE with external libraries.
 
         Returns
@@ -235,8 +245,12 @@ class TextMetrics:
                 sentence_bleu = getattr(nltk_bleu, "sentence_bleu")
                 ref_tokens = reference.strip().split()
                 cand_tokens = candidate.strip().split()
-                results["lib_nltk_bleu_1"] = sentence_bleu([ref_tokens], cand_tokens, weights=(1, 0, 0, 0))
-                results["lib_nltk_bleu_2"] = sentence_bleu([ref_tokens], cand_tokens, weights=(0.5, 0.5, 0, 0))
+                results["lib_nltk_bleu_1"] = sentence_bleu(
+                    [ref_tokens], cand_tokens, weights=(1, 0, 0, 0)
+                )
+                results["lib_nltk_bleu_2"] = sentence_bleu(
+                    [ref_tokens], cand_tokens, weights=(0.5, 0.5, 0, 0)
+                )
             except Exception as exc:
                 notes.append(f"nltk_available_but_unusable: {exc.__class__.__name__}")
         else:
@@ -245,13 +259,17 @@ class TextMetrics:
         if importlib.util.find_spec("rouge_score") is not None:
             try:
                 rouge_scorer = importlib.import_module("rouge_score.rouge_scorer")
-                scorer = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL"], use_stemmer=False)
+                scorer = rouge_scorer.RougeScorer(
+                    ["rouge1", "rouge2", "rougeL"], use_stemmer=False
+                )
                 score = scorer.score(reference, candidate)
                 results["lib_rouge_score_rouge1_recall"] = score["rouge1"].recall
                 results["lib_rouge_score_rouge2_recall"] = score["rouge2"].recall
                 results["lib_rouge_score_rougeL_recall"] = score["rougeL"].recall
             except Exception as exc:
-                notes.append(f"rouge_score_available_but_unusable: {exc.__class__.__name__}")
+                notes.append(
+                    f"rouge_score_available_but_unusable: {exc.__class__.__name__}"
+                )
         else:
             notes.append("rouge_score_not_installed")
 
@@ -303,14 +321,26 @@ def main() -> None:
 
     print("\n=== Exception checks ===")
     exception_cases = [
-        ("compute_rouge(0)", lambda: TextMetrics("a", "a", [], [], 0, 0).compute_rouge(0), ValueError),
-        ("compute_bleu(0)", lambda: TextMetrics("a", "a", [], [], 0, 0).compute_bleu(0), ValueError),
+        (
+            "compute_rouge(0)",
+            lambda: TextMetrics("a", "a", [], [], 0, 0).compute_rouge(0),
+            ValueError,
+        ),
+        (
+            "compute_bleu(0)",
+            lambda: TextMetrics("a", "a", [], [], 0, 0).compute_bleu(0),
+            ValueError,
+        ),
         (
             "compute_accuracy(len mismatch)",
             lambda: TextMetrics("", "", [1], [1, 0], 0, 0).compute_accuracy(),
             ValueError,
         ),
-        ("compute_win_rate(negative)", lambda: TextMetrics("", "", [], [], -1, 1).compute_win_rate(), ValueError),
+        (
+            "compute_win_rate(negative)",
+            lambda: TextMetrics("", "", [], [], -1, 1).compute_win_rate(),
+            ValueError,
+        ),
     ]
 
     for name, fn, exc in exception_cases:
@@ -335,4 +365,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # uv run python -m scripts.day11_text_metrics
     main()
