@@ -6,7 +6,7 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 
 from tasks import compute_metrics_and_report, compute_metrics_task
-from week2_metrics import MetricsCalculator
+from scripts.week2_metrics import MetricsCalculator
 
 app = FastAPI()
 
@@ -25,7 +25,9 @@ async def upload_file(file: UploadFile = File(...)):
     - 返回上传确认信息
     """
     if not file.filename or not file.filename.lower().endswith(".csv"):
-        return JSONResponse(status_code=400, content={"error": "Only CSV files are allowed"})
+        return JSONResponse(
+            status_code=400, content={"error": "Only CSV files are allowed"}
+        )
 
     filename = f"{uuid.uuid4()}_{file.filename}"
     file_location = os.path.join(UPLOAD_DIR, filename)
@@ -39,7 +41,9 @@ async def upload_file(file: UploadFile = File(...)):
 async def batch_metrics(file: UploadFile = File(...)):
     """批量指标计算接口。"""
     if not file.filename or not file.filename.lower().endswith(".csv"):
-        return JSONResponse(status_code=400, content={"error": "Only CSV files are allowed"})
+        return JSONResponse(
+            status_code=400, content={"error": "Only CSV files are allowed"}
+        )
 
     file_location = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_location, "wb") as f:
@@ -59,7 +63,9 @@ async def batch_metrics(file: UploadFile = File(...)):
 async def batch_metrics_async(file: UploadFile = File(...)):
     """异步批量指标计算接口。"""
     if not file.filename or not file.filename.lower().endswith(".csv"):
-        return JSONResponse(status_code=400, content={"error": "Only CSV files are allowed"})
+        return JSONResponse(
+            status_code=400, content={"error": "Only CSV files are allowed"}
+        )
 
     filename = f"{uuid.uuid4()}_{file.filename}"
     file_location = os.path.join(UPLOAD_DIR, filename)
@@ -73,10 +79,18 @@ async def batch_metrics_async(file: UploadFile = File(...)):
 @app.get("/tasks/{task_id}")
 def get_task_status(task_id: str):
     """查询异步任务状态（非阻塞）。"""
+
     result = compute_metrics_task.AsyncResult(task_id)
 
-    response = {"task_id": task_id, "status": result.status}
-    if result.status == "FAILURE":
+    response = {
+        "task_id": task_id,
+        "status": result.status,
+    }
+
+    if result.status == "SUCCESS":
+        response["result"] = result.result
+
+    elif result.status == "FAILURE":
         response["error"] = str(result.result)
 
     return response
@@ -86,7 +100,9 @@ def get_task_status(task_id: str):
 async def batch_report_async(file: UploadFile = File(...)):
     """上传 CSV 后触发异步报告生成任务。"""
     if not file.filename or not file.filename.lower().endswith(".csv"):
-        return JSONResponse(status_code=400, content={"error": "Only CSV files are allowed"})
+        return JSONResponse(
+            status_code=400, content={"error": "Only CSV files are allowed"}
+        )
 
     filename = f"{uuid.uuid4()}_{file.filename}"
     file_location = os.path.join(UPLOAD_DIR, filename)

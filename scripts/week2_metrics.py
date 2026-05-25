@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from scripts.day11_text_metrics import TextMetrics
+import pandas as pd
 
 
 class MetricsCalculator:
@@ -20,12 +21,18 @@ class MetricsCalculator:
     def _parse_int_list(value: Any) -> list[int]:
         if value is None:
             return []
+
+        if pd.isna(value):
+            return []
+
         if isinstance(value, list):
             return [int(x) for x in value]
 
         text = str(value).strip()
+
         if not text:
             return []
+
         return [int(x.strip()) for x in text.split(",") if x.strip()]
 
     def compute(self, row: dict[str, Any]) -> dict[str, float]:

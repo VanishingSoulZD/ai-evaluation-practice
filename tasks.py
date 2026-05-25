@@ -8,8 +8,11 @@ import seaborn as sns
 from celery_app import app
 from week2_metrics import MetricsCalculator
 
-REPORT_DIR = "./reports"
-os.makedirs(REPORT_DIR, exist_ok=True)
+
+from pathlib import Path
+
+REPORT_DIR = Path("./reports/day19_async_metrics_report")
+REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @app.task
@@ -50,7 +53,13 @@ def compute_metrics_and_report(file_path: str) -> dict:
             plt.ylabel("Count")
         else:
             # 若没有可绘制的数值列，生成提示图避免任务失败
-            plt.text(0.5, 0.5, "No numeric metrics available for chart", ha="center", va="center")
+            plt.text(
+                0.5,
+                0.5,
+                "No numeric metrics available for chart",
+                ha="center",
+                va="center",
+            )
             plt.title("Metrics Chart")
             plt.axis("off")
 
