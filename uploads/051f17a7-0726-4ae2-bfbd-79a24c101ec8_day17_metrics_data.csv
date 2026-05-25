@@ -1,0 +1,7 @@
+﻿reference,candidate,y_true,y_pred,wins,losses,ties
+the cat is on the mat,the cat sat on the mat,"1,0,1,1","1,1,1,0",6,3,1
+a quick brown fox jumps,quick brown fox jumps high,"0,1,1","0,1,0",4,4,2
+machine learning improves prediction,machine learning improves forecasting,"1,1,0,0","1,1,0,1",10,2,0
+,,,,0,0,0
+data pipelines should be robust,robust data pipelines are important,"1,0,1,0,1","1,0,1,0,1",7,1,2
+the model generates concise answers,the model produces clear answers,"1,1,1,0","1,0,1,0",5,2,3
