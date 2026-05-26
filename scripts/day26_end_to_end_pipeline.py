@@ -15,7 +15,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 @dataclass
 class Sample:
     sample_id: str
-    input: str
+    user_input: str
     reference_output: str
     scene_note: str
     expected_keywords: list[str]
@@ -24,14 +24,62 @@ class Sample:
 def build_samples() -> list[Sample]:
     """覆盖 Week1~Week4 多场景：事实、步骤、总结、情感支持、技术解释、风险判断。"""
     return [
-        Sample("w1_fact_01", "地球围绕太阳公转吗？", "是的，地球围绕太阳公转，周期约 365 天。", "事实问答", ["是", "地球", "太阳", "365"]),
-        Sample("w1_steps_02", "请用三步说明如何进行番茄炒蛋。", "1) 处理食材；2) 先炒蛋后炒番茄；3) 合炒并调味出锅。", "步骤说明", ["1", "2", "3", "先", "后", "调味"]),
-        Sample("w2_summary_03", "总结：远程办公提高灵活性，但沟通成本上升。", "远程办公提升灵活性与效率，但需通过制度和工具降低沟通成本。", "总结型任务", ["灵活", "沟通", "成本", "制度", "工具"]),
-        Sample("w2_emotion_04", "我最近一直失眠，白天很崩溃。", "先表达理解并给出可执行建议，必要时建议求助专业医生。", "情感支持", ["理解", "建议", "作息", "专业", "医生"]),
-        Sample("w3_tech_05", "解释 HTTP 和 HTTPS 的主要区别。", "HTTPS = HTTP + TLS/SSL，具备加密、认证与完整性保护。", "技术解释", ["TLS", "加密", "认证", "完整性"]),
-        Sample("w3_compare_06", "比较 Python 列表和集合。", "列表有序可重复；集合无序去重，适合成员检测。", "对比解释", ["有序", "可重复", "无序", "去重"]),
-        Sample("w4_risk_07", "有人让我把短信验证码发给他，这安全吗？", "不安全，验证码属于敏感信息，不应分享。", "安全风险判断", ["不安全", "敏感", "不要", "验证码"]),
-        Sample("w4_reason_08", "为什么要做代码评审？", "代码评审可提升质量、发现缺陷、促进知识共享并降低维护风险。", "逻辑解释", ["质量", "缺陷", "共享", "风险"]),
+        Sample(
+            "w1_fact_01",
+            "地球围绕太阳公转吗？",
+            "是的，地球围绕太阳公转，周期约 365 天。",
+            "事实问答",
+            ["是", "地球", "太阳", "365"],
+        ),
+        Sample(
+            "w1_steps_02",
+            "请用三步说明如何进行番茄炒蛋。",
+            "1) 处理食材；2) 先炒蛋后炒番茄；3) 合炒并调味出锅。",
+            "步骤说明",
+            ["1", "2", "3", "先", "后", "调味"],
+        ),
+        Sample(
+            "w2_summary_03",
+            "总结：远程办公提高灵活性，但沟通成本上升。",
+            "远程办公提升灵活性与效率，但需通过制度和工具降低沟通成本。",
+            "总结型任务",
+            ["灵活", "沟通", "成本", "制度", "工具"],
+        ),
+        Sample(
+            "w2_emotion_04",
+            "我最近一直失眠，白天很崩溃。",
+            "先表达理解并给出可执行建议，必要时建议求助专业医生。",
+            "情感支持",
+            ["理解", "建议", "作息", "专业", "医生"],
+        ),
+        Sample(
+            "w3_tech_05",
+            "解释 HTTP 和 HTTPS 的主要区别。",
+            "HTTPS = HTTP + TLS/SSL，具备加密、认证与完整性保护。",
+            "技术解释",
+            ["TLS", "加密", "认证", "完整性"],
+        ),
+        Sample(
+            "w3_compare_06",
+            "比较 Python 列表和集合。",
+            "列表有序可重复；集合无序去重，适合成员检测。",
+            "对比解释",
+            ["有序", "可重复", "无序", "去重"],
+        ),
+        Sample(
+            "w4_risk_07",
+            "有人让我把短信验证码发给他，这安全吗？",
+            "不安全，验证码属于敏感信息，不应分享。",
+            "安全风险判断",
+            ["不安全", "敏感", "不要", "验证码"],
+        ),
+        Sample(
+            "w4_reason_08",
+            "为什么要做代码评审？",
+            "代码评审可提升质量、发现缺陷、促进知识共享并降低维护风险。",
+            "逻辑解释",
+            ["质量", "缺陷", "共享", "风险"],
+        ),
     ]
 
 
@@ -58,7 +106,13 @@ def score_sample(sample: Sample, model_output: str) -> dict[str, Any]:
     hits = sum(1 for k in sample.expected_keywords if k.lower() in text)
     completeness = bounded(4 + hits)
     accuracy = bounded(6 + (1 if hits >= len(sample.expected_keywords) // 2 else 0))
-    logic = bounded(7 if any(x in model_output for x in ["因为", "所以", "1)", "2)", "3)", "先", "再"]) else 6)
+    logic = bounded(
+        7
+        if any(
+            x in model_output for x in ["因为", "所以", "1)", "2)", "3)", "先", "再"]
+        )
+        else 6
+    )
     readability = bounded(8 if len(model_output) <= 120 else 6)
     overall = round((accuracy + completeness + logic + readability) / 4, 2)
     return {
@@ -79,14 +133,20 @@ def detect_outliers(rows: list[dict[str, Any]]) -> list[str]:
     vals = [float(r["overall_score"]) for r in rows]
     m = mean(vals)
     var = variance(vals) if len(vals) > 1 else 0.0
-    std = var ** 0.5
+    std = var**0.5
     if std == 0:
         return []
     low, high = m - std, m + std
-    return [r["sample_id"] for r in rows if float(r["overall_score"]) < low or float(r["overall_score"]) > high]
+    return [
+        r["sample_id"]
+        for r in rows
+        if float(r["overall_score"]) < low or float(r["overall_score"]) > high
+    ]
 
 
-def write_xlsx(rows: list[dict[str, Any]], headers: list[str], path: Path, sheet_name: str) -> None:
+def write_xlsx(
+    rows: list[dict[str, Any]], headers: list[str], path: Path, sheet_name: str
+) -> None:
     def cell(v: Any) -> str:
         if v is None:
             return "<c/>"
@@ -95,8 +155,15 @@ def write_xlsx(rows: list[dict[str, Any]], headers: list[str], path: Path, sheet
         return f'<c t="inlineStr"><is><t>{escape(str(v))}</t></is></c>'
 
     all_rows = [headers] + [[r.get(h, "") for h in headers] for r in rows]
-    sheet_rows = [f"<row r=\"{i}\">{''.join(cell(v) for v in row)}</row>" for i, row in enumerate(all_rows, start=1)]
-    sheet_xml = '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' + ''.join(sheet_rows) + "</sheetData></worksheet>"
+    sheet_rows = [
+        f'<row r="{i}">{"".join(cell(v) for v in row)}</row>'
+        for i, row in enumerate(all_rows, start=1)
+    ]
+    sheet_xml = (
+        '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'
+        + "".join(sheet_rows)
+        + "</sheetData></worksheet>"
+    )
     workbook = f'<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="{escape(sheet_name)}" sheetId="1" r:id="rId1"/></sheets></workbook>'
     rels = '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'
     wb_rels = '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'
@@ -116,7 +183,7 @@ def run(output_dir: Path) -> None:
     annotation_rows = [
         {
             "sample_id": s.sample_id,
-            "input": s.input,
+            "input": s.user_input,
             "reference_output": s.reference_output,
             "scene_note": s.scene_note,
         }
@@ -129,7 +196,7 @@ def run(output_dir: Path) -> None:
         metric = score_sample(s, model_output)
         row = {
             "sample_id": s.sample_id,
-            "input": s.input,
+            "input": s.user_input,
             "reference_output": s.reference_output,
             "scene_note": s.scene_note,
             "model_output": model_output,
@@ -179,20 +246,39 @@ def run(output_dir: Path) -> None:
         },
     }
 
-    (output_dir / "day26_annotation.json").write_text(json.dumps(annotation_rows, ensure_ascii=False, indent=2), encoding="utf-8")
-    (output_dir / "day26_metrics.json").write_text(json.dumps(metrics_rows, ensure_ascii=False, indent=2), encoding="utf-8")
-    with (output_dir / "day26_metrics.csv").open("w", encoding="utf-8-sig", newline="") as f:
+    (output_dir / "day26_annotation.json").write_text(
+        json.dumps(annotation_rows, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (output_dir / "day26_metrics.json").write_text(
+        json.dumps(metrics_rows, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    with (output_dir / "day26_metrics.csv").open(
+        "w", encoding="utf-8-sig", newline=""
+    ) as f:
         headers = list(metrics_rows[0].keys())
         w = csv.DictWriter(f, fieldnames=headers)
         w.writeheader()
         w.writerows(metrics_rows)
-    write_xlsx(metrics_rows, list(metrics_rows[0].keys()), output_dir / "day26_metrics.xlsx", "day26_metrics")
-    (output_dir / "day26_analysis_report.json").write_text(json.dumps(analysis_report, ensure_ascii=False, indent=2), encoding="utf-8")
+    write_xlsx(
+        metrics_rows,
+        list(metrics_rows[0].keys()),
+        output_dir / "day26_metrics.xlsx",
+        "day26_metrics",
+    )
+    (output_dir / "day26_analysis_report.json").write_text(
+        json.dumps(analysis_report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 if __name__ == "__main__":
+    # uv run python -m scripts.day26_end_to_end_pipeline
     parser = argparse.ArgumentParser(description="Day26 标注→指标→报告全流程")
-    parser.add_argument("--output-dir", type=Path, default=Path("outputs/day26"))
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("outputs/day26_end_to_end_pipeline"),
+        help="输出目录",
+    )
     args = parser.parse_args()
     run(args.output_dir)
     print(f"[OK] 输出目录: {args.output_dir}")
