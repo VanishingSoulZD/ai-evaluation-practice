@@ -24,11 +24,36 @@ class DialogueSample:
 
 def build_samples() -> list[DialogueSample]:
     return [
-        DialogueSample("sim1", "北京是中国的首都吗？", "事实问答，回答应明确结论。", ["北京", "首都"]),
-        DialogueSample("sim2", "请用三步说明如何煮鸡蛋。", "步骤型任务，强调结构化和完整性。", ["步骤", "水", "鸡蛋", "煮"]),
-        DialogueSample("sim3", "总结：运动有助于健康，但要循序渐进。", "总结型任务，需覆盖利弊与建议。", ["运动", "健康", "循序渐进"]),
-        DialogueSample("sim4", "用户说：我昨晚没睡好，今天很焦虑。你怎么安慰他？", "情感支持场景，要求同理心和建议。", ["理解", "休息", "建议", "专业帮助"]),
-        DialogueSample("sim5", "比较列表(list)和元组(tuple)的区别。", "技术解释场景，强调准确性。", ["可变", "不可变", "list", "tuple"]),
+        DialogueSample(
+            "sim1",
+            "北京是中国的首都吗？",
+            "事实问答，回答应明确结论。",
+            ["北京", "首都"],
+        ),
+        DialogueSample(
+            "sim2",
+            "请用三步说明如何煮鸡蛋。",
+            "步骤型任务，强调结构化和完整性。",
+            ["步骤", "水", "鸡蛋", "煮"],
+        ),
+        DialogueSample(
+            "sim3",
+            "总结：运动有助于健康，但要循序渐进。",
+            "总结型任务，需覆盖利弊与建议。",
+            ["运动", "健康", "循序渐进"],
+        ),
+        DialogueSample(
+            "sim4",
+            "用户说：我昨晚没睡好，今天很焦虑。你怎么安慰他？",
+            "情感支持场景，要求同理心和建议。",
+            ["理解", "休息", "建议", "专业帮助"],
+        ),
+        DialogueSample(
+            "sim5",
+            "比较列表(list)和元组(tuple)的区别。",
+            "技术解释场景，强调准确性。",
+            ["可变", "不可变", "list", "tuple"],
+        ),
     ]
 
 
@@ -59,13 +84,21 @@ def _extract_response_json(response: Any) -> dict[str, Any]:
 def call_llm_answer(user_input: str, note: str, model: str) -> str:
     from openai import OpenAI
 
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    # client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    client = OpenAI(
+        api_key=os.environ.get("OPENROUTER_API_KEY"),
+        base_url=os.environ.get("OPENROUTER_BASE_URL"),
+    )
+    model = "google/gemini-3.1-flash-lite-preview"
     response = client.responses.create(
         model=model,
         input=[
             {"role": "system", "content": "你是友好且可靠的中文助手。"},
             {"role": "user", "content": build_chat_prompt(user_input, note)},
         ],
+        text={"format": {"type": "text"}},
+        temperature=0,
+        max_output_tokens=256,
     )
     output_text = getattr(response, "output_text", "")
     if not isinstance(output_text, str) or not output_text.strip():
@@ -76,7 +109,12 @@ def call_llm_answer(user_input: str, note: str, model: str) -> str:
 def call_llm_score(user_input: str, model_output: str, model: str) -> dict[str, Any]:
     from openai import OpenAI
 
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    # client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    client = OpenAI(
+        api_key=os.environ.get("OPENROUTER_API_KEY"),
+        base_url=os.environ.get("OPENROUTER_BASE_URL"),
+    )
+    model = "google/gemini-3.1-flash-lite-preview"
     response = client.responses.create(
         model=model,
         input=[
@@ -84,6 +122,8 @@ def call_llm_score(user_input: str, model_output: str, model: str) -> dict[str, 
             {"role": "user", "content": build_score_prompt(user_input, model_output)},
         ],
         text={"format": {"type": "json_object"}},
+        temperature=0,
+        max_output_tokens=256,
     )
     return _extract_response_json(response)
 
@@ -108,10 +148,21 @@ def mock_score(sample: DialogueSample, output: str) -> dict[str, Any]:
     hit_count = sum(1 for k in sample.expected_keywords if k.lower() in text)
     completeness = _bounded(5 + hit_count)
     accuracy = _bounded(6 + (1 if hit_count >= 2 else 0))
-    logic = _bounded(7) if any(x in output for x in ["因此", "所以", "1)", "2)", "3)"]) else _bounded(6)
+    logic = (
+        _bounded(7)
+        if any(x in output for x in ["因此", "所以", "1)", "2)", "3)"])
+        else _bounded(6)
+    )
     readability = _bounded(8 if len(output) <= 120 else 6)
     overall = round((accuracy + completeness + logic + readability) / 4, 2)
-    return {"accuracy": accuracy, "completeness": completeness, "logic": logic, "readability": readability, "overall_score": overall, "rationale": f"Mock评分：命中关键词 {hit_count}/{len(sample.expected_keywords)}"}
+    return {
+        "accuracy": accuracy,
+        "completeness": completeness,
+        "logic": logic,
+        "readability": readability,
+        "overall_score": overall,
+        "rationale": f"Mock评分：命中关键词 {hit_count}/{len(sample.expected_keywords)}",
+    }
 
 
 def _delta(value: Any, baseline: float = 7.0) -> float | None:
@@ -127,8 +178,15 @@ def _write_xlsx(rows: list[dict[str, Any]], headers: list[str], path: Path) -> N
         return f'<c t="inlineStr"><is><t>{escape(str(v))}</t></is></c>'
 
     all_rows = [headers] + [[r.get(h, "") for h in headers] for r in rows]
-    sheet_rows = [f"<row r=\"{i}\">{''.join(cell(v) for v in row)}</row>" for i, row in enumerate(all_rows, start=1)]
-    sheet_xml = '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' + ''.join(sheet_rows) + '</sheetData></worksheet>'
+    sheet_rows = [
+        f'<row r="{i}">{"".join(cell(v) for v in row)}</row>'
+        for i, row in enumerate(all_rows, start=1)
+    ]
+    sheet_xml = (
+        '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'
+        + "".join(sheet_rows)
+        + "</sheetData></worksheet>"
+    )
     workbook = '<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="scores" sheetId="1" r:id="rId1"/></sheets></workbook>'
     rels = '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'
     wb_rels = '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'
@@ -144,14 +202,44 @@ def _write_xlsx(rows: list[dict[str, Any]], headers: list[str], path: Path) -> N
 def analyze(rows: list[dict[str, Any]]) -> dict[str, Any]:
     dims = ["accuracy", "completeness", "logic", "readability", "overall_score"]
     success_rows = [r for r in rows if r["status"] == "success"]
-    report: dict[str, Any] = {"total_samples": len(rows), "success_count": len(success_rows), "failed_count": len(rows) - len(success_rows), "dimension_stats": {}, "outlier_dialogues": [], "max_impact_sample": None}
+    report: dict[str, Any] = {
+        "total_samples": len(rows),
+        "success_count": len(success_rows),
+        "failed_count": len(rows) - len(success_rows),
+        "dimension_stats": {},
+        "outlier_dialogues": [],
+        "max_impact_sample": None,
+    }
     for dim in dims:
         values = [float(r[dim]) for r in success_rows if r.get(dim) is not None]
-        report["dimension_stats"][dim] = {"mean": round(mean(values), 4) if values else None, "variance": round(variance(values), 4) if len(values) > 1 else (0.0 if len(values) == 1 else None)}
-    report["outlier_dialogues"] = [{"sample_id": r["sample_id"], "overall_score": r["overall_score"], "delta_overall_score": r["delta_overall_score"], "rationale": r.get("rationale", "")} for r in success_rows if r.get("overall_score") is not None and float(r["overall_score"]) < 5]
+        report["dimension_stats"][dim] = {
+            "mean": round(mean(values), 4) if values else None,
+            "variance": round(variance(values), 4)
+            if len(values) > 1
+            else (0.0 if len(values) == 1 else None),
+        }
+    report["outlier_dialogues"] = [
+        {
+            "sample_id": r["sample_id"],
+            "overall_score": r["overall_score"],
+            "delta_overall_score": r["delta_overall_score"],
+            "rationale": r.get("rationale", ""),
+        }
+        for r in success_rows
+        if r.get("overall_score") is not None and float(r["overall_score"]) < 5
+    ]
     if success_rows:
-        max_row = sorted(success_rows, key=lambda x: abs(float(x.get("delta_overall_score", 0))), reverse=True)[0]
-        report["max_impact_sample"] = {"sample_id": max_row["sample_id"], "delta_overall_score": max_row.get("delta_overall_score"), "overall_score": max_row.get("overall_score"), "scene_note": max_row.get("scene_note")}
+        max_row = sorted(
+            success_rows,
+            key=lambda x: abs(float(x.get("delta_overall_score", 0))),
+            reverse=True,
+        )[0]
+        report["max_impact_sample"] = {
+            "sample_id": max_row["sample_id"],
+            "delta_overall_score": max_row.get("delta_overall_score"),
+            "overall_score": max_row.get("overall_score"),
+            "scene_note": max_row.get("scene_note"),
+        }
     return report
 
 
@@ -161,14 +249,61 @@ def run(output_dir: Path, model: str, use_mock: bool) -> None:
     rows: list[dict[str, Any]] = []
     for sample in build_samples():
         try:
-            response = mock_answer(sample) if use_mock else call_llm_answer(sample.normal_input, sample.scene_note, model)
-            score = mock_score(sample, response) if use_mock else call_llm_score(sample.normal_input, response, model)
-            row = {"sample_id": sample.sample_id, "normal_input": sample.normal_input, "scene_note": sample.scene_note, "model_output": response, "status": "success", "error": "", "accuracy": score.get("accuracy"), "completeness": score.get("completeness"), "logic": score.get("logic"), "readability": score.get("readability"), "overall_score": score.get("overall_score"), "rationale": score.get("rationale", "")}
-            for dim in ["accuracy", "completeness", "logic", "readability", "overall_score"]:
+            response = (
+                mock_answer(sample)
+                if use_mock
+                else call_llm_answer(sample.normal_input, sample.scene_note, model)
+            )
+            score = (
+                mock_score(sample, response)
+                if use_mock
+                else call_llm_score(sample.normal_input, response, model)
+            )
+            row = {
+                "sample_id": sample.sample_id,
+                "normal_input": sample.normal_input,
+                "scene_note": sample.scene_note,
+                "model_output": response,
+                "status": "success",
+                "error": "",
+                "accuracy": score.get("accuracy"),
+                "completeness": score.get("completeness"),
+                "logic": score.get("logic"),
+                "readability": score.get("readability"),
+                "overall_score": score.get("overall_score"),
+                "rationale": score.get("rationale", ""),
+            }
+            for dim in [
+                "accuracy",
+                "completeness",
+                "logic",
+                "readability",
+                "overall_score",
+            ]:
                 row[f"delta_{dim}"] = _delta(row[dim])
             rows.append(row)
         except Exception as exc:
-            rows.append({"sample_id": sample.sample_id, "normal_input": sample.normal_input, "scene_note": sample.scene_note, "model_output": "", "status": "failed", "error": str(exc), "accuracy": None, "completeness": None, "logic": None, "readability": None, "overall_score": None, "rationale": "", "delta_accuracy": None, "delta_completeness": None, "delta_logic": None, "delta_readability": None, "delta_overall_score": None})
+            rows.append(
+                {
+                    "sample_id": sample.sample_id,
+                    "normal_input": sample.normal_input,
+                    "scene_note": sample.scene_note,
+                    "model_output": "",
+                    "status": "failed",
+                    "error": str(exc),
+                    "accuracy": None,
+                    "completeness": None,
+                    "logic": None,
+                    "readability": None,
+                    "overall_score": None,
+                    "rationale": "",
+                    "delta_accuracy": None,
+                    "delta_completeness": None,
+                    "delta_logic": None,
+                    "delta_readability": None,
+                    "delta_overall_score": None,
+                }
+            )
 
     headers = sorted({k for row in rows for k in row.keys()})
     csv_path = output_dir / "day25_simulation_scores.csv"
@@ -181,9 +316,13 @@ def run(output_dir: Path, model: str, use_mock: bool) -> None:
         writer.writeheader()
         writer.writerows(rows)
     _write_xlsx(rows, headers, xlsx_path)
-    json_path.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+    json_path.write_text(
+        json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     report = analyze(rows)
-    analysis_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    analysis_path.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     print(f"[OK] csv: {csv_path}")
     print(f"[OK] xlsx: {xlsx_path}")
     print(f"[OK] json: {json_path}")
@@ -194,11 +333,15 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Day 25 仿真环境对话评估")
     parser.add_argument("--model", type=str, default="gpt-4.1")
     parser.add_argument("--mock", action="store_true", help="使用 Mock 对话与评分")
-    parser.add_argument("--output-dir", type=Path, default=Path("outputs/day25"))
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("outputs/day25_simulation_test")
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
+    # uv run python -m scripts.day25_simulation_eval --mock
+    # uv run python -m scripts.day25_simulation_eval
     args = parse_args()
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
         raise SystemExit("OPENAI_API_KEY 未设置；请设置后重试，或使用 --mock。")

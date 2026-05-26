@@ -1,0 +1,33 @@
+{
+  "total_samples": 5,
+  "success_count": 5,
+  "failed_count": 0,
+  "dimension_stats": {
+    "accuracy": {
+      "mean": -0.6,
+      "variance": 0.3
+    },
+    "completeness": {
+      "mean": -0.8,
+      "variance": 0.7
+    },
+    "logic": {
+      "mean": -0.6,
+      "variance": 0.3
+    },
+    "readability": {
+      "mean": 0.0,
+      "variance": 0.0
+    },
+    "overall_score": {
+      "mean": -0.5,
+      "variance": 0.045
+    }
+  },
+  "outliers": [],
+  "max_impact_sample": {
+    "sample_id": "adv2",
+    "delta_overall_score": -0.8,
+    "note": "逻辑迷惑"
+  }
+}

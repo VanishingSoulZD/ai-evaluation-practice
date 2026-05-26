@@ -1,0 +1,31 @@
+{
+  "success_count": 8,
+  "failed_count": 0,
+  "accuracy": {
+    "mean": 7.375,
+    "variance": 7.9821
+  },
+  "completeness": {
+    "mean": 6.75,
+    "variance": 6.7857
+  },
+  "logic": {
+    "mean": 7.875,
+    "variance": 8.6964
+  },
+  "readability": {
+    "mean": 9.25,
+    "variance": 3.0714
+  },
+  "overall_score": {
+    "mean": 7.8125,
+    "variance": 4.4241
+  },
+  "outliers": [
+    {
+      "sample_id": "s6",
+      "overall_score": 3.25,
+      "rationale": "被测答案提供的煤炭和石油属于不可再生能源，与问题要求的可再生能源完全不符，准确性极低。虽然回答了两个选项，但内容错误，导致完整性和逻辑性均无法得分。"
+    }
+  ]
+}

@@ -29,13 +29,43 @@ def build_samples() -> list[Sample]:
     """构造内置小规模样本集（8 条）。"""
     return [
         Sample("s1", "法国首都是什么？", "巴黎", "法国首都是巴黎。"),
-        Sample("s2", "解释牛顿第一定律。", "物体在不受外力时保持静止或匀速直线运动。", "牛顿第一定律说没有外力时物体状态不变。"),
-        Sample("s3", "将句子翻译为英文：今天天气很好。", "The weather is very nice today.", "Today weather very good."),
-        Sample("s4", "简述光合作用。", "植物利用光能把二氧化碳和水转化为有机物并释放氧气。", "植物靠阳光制造养分并释放氧气。"),
-        Sample("s5", "什么是二分查找？", "在有序数组中通过不断折半定位目标的搜索算法。", "二分查找就是从中间开始比较并缩小范围。"),
+        Sample(
+            "s2",
+            "解释牛顿第一定律。",
+            "物体在不受外力时保持静止或匀速直线运动。",
+            "牛顿第一定律说没有外力时物体状态不变。",
+        ),
+        Sample(
+            "s3",
+            "将句子翻译为英文：今天天气很好。",
+            "The weather is very nice today.",
+            "Today weather very good.",
+        ),
+        Sample(
+            "s4",
+            "简述光合作用。",
+            "植物利用光能把二氧化碳和水转化为有机物并释放氧气。",
+            "植物靠阳光制造养分并释放氧气。",
+        ),
+        Sample(
+            "s5",
+            "什么是二分查找？",
+            "在有序数组中通过不断折半定位目标的搜索算法。",
+            "二分查找就是从中间开始比较并缩小范围。",
+        ),
         Sample("s6", "列举两种可再生能源。", "太阳能、风能。", "煤炭和石油。"),
-        Sample("s7", "总结：AI 可提升效率但有偏见风险。", "AI 能提升生产效率，但需控制偏见与伦理风险。", "AI 有好处也有风险。"),
-        Sample("s8", "Python 中列表和元组的区别？", "列表可变，元组不可变。", "列表和元组都能存多个值，但元组通常不可改。"),
+        Sample(
+            "s7",
+            "总结：AI 可提升效率但有偏见风险。",
+            "AI 能提升生产效率，但需控制偏见与伦理风险。",
+            "AI 有好处也有风险。",
+        ),
+        Sample(
+            "s8",
+            "Python 中列表和元组的区别？",
+            "列表可变，元组不可变。",
+            "列表和元组都能存多个值，但元组通常不可改。",
+        ),
     ]
 
 
@@ -89,6 +119,11 @@ def call_gpt_score(sample: Sample, model: str) -> dict[str, Any]:
     from openai import OpenAI
 
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    # client = OpenAI(
+    #     api_key=os.environ.get("OPENROUTER_API_KEY"),
+    #     base_url=os.environ.get("OPENROUTER_BASE_URL"),
+    # )
+    # model = "google/gemini-3.1-flash-lite-preview"
     response = client.responses.create(
         model=model,
         input=[
@@ -96,6 +131,8 @@ def call_gpt_score(sample: Sample, model: str) -> dict[str, Any]:
             {"role": "user", "content": build_prompt(sample)},
         ],
         text={"format": {"type": "json_object"}},
+        temperature=0,
+        max_output_tokens=256,
     )
     return _extract_response_json(response)
 
@@ -109,7 +146,9 @@ def mock_score(sample: Sample) -> dict[str, Any]:
         "completeness": max(1, base - 1),
         "logic": base,
         "readability": min(10, base + 1),
-        "overall_score": round((base + max(1, base - 1) + base + min(10, base + 1)) / 4, 2),
+        "overall_score": round(
+            (base + max(1, base - 1) + base + min(10, base + 1)) / 4, 2
+        ),
         "rationale": "Mock 评分：用于离线验证流程。",
     }
 
@@ -118,7 +157,10 @@ def analyze_scores(df: pd.DataFrame) -> dict[str, Any]:
     """对评分结果计算均值、方差并检查异常值（总体分 < 5）。"""
     dims = ["accuracy", "completeness", "logic", "readability", "overall_score"]
     success_df = df[df["status"] == "success"].copy()
-    stats: dict[str, Any] = {"success_count": int(len(success_df)), "failed_count": int(len(df) - len(success_df))}
+    stats: dict[str, Any] = {
+        "success_count": int(len(success_df)),
+        "failed_count": int(len(df) - len(success_df)),
+    }
     for dim in dims:
         values = success_df[dim].dropna().tolist()
         if not values:
@@ -128,7 +170,9 @@ def analyze_scores(df: pd.DataFrame) -> dict[str, Any]:
             "mean": round(mean(values), 4),
             "variance": round(variance(values), 4) if len(values) > 1 else 0.0,
         }
-    outliers = success_df[success_df["overall_score"] < 5][["sample_id", "overall_score", "rationale"]]
+    outliers = success_df[success_df["overall_score"] < 5][
+        ["sample_id", "overall_score", "rationale"]
+    ]
     stats["outliers"] = outliers.to_dict(orient="records")
     return stats
 
@@ -147,7 +191,9 @@ def run(output_dir: Path, model: str, use_mock: bool) -> None:
 
     for sample in samples:
         try:
-            score = mock_score(sample) if use_mock else call_gpt_score(sample, model=model)
+            score = (
+                mock_score(sample) if use_mock else call_gpt_score(sample, model=model)
+            )
             rows.append(
                 {
                     "sample_id": sample.sample_id,
@@ -190,7 +236,9 @@ def run(output_dir: Path, model: str, use_mock: bool) -> None:
     df.to_json(json_path, orient="records", force_ascii=False, indent=2)
 
     analysis = analyze_scores(df)
-    analysis_path.write_text(json.dumps(analysis, ensure_ascii=False, indent=2), encoding="utf-8")
+    analysis_path.write_text(
+        json.dumps(analysis, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     print(f"[OK] scores csv: {csv_path}")
     print(f"[OK] scores xlsx: {xlsx_path}")
@@ -201,13 +249,19 @@ def run(output_dir: Path, model: str, use_mock: bool) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Day 23 LLM 自动评分实验")
-    parser.add_argument("--output-dir", type=Path, default=Path("outputs/day23"))
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("outputs/day23_llm_judge")
+    )
     parser.add_argument("--model", type=str, default="gpt-4.1")
-    parser.add_argument("--mock", action="store_true", help="使用本地 mock 评分，跳过真实 API")
+    parser.add_argument(
+        "--mock", action="store_true", help="使用本地 mock 评分，跳过真实 API"
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
+    # uv run python -m scripts.day23_llm_judge_experiment --mock
+    # uv run python -m scripts.day23_llm_judge_experiment
     args = parse_args()
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
         raise SystemExit("OPENAI_API_KEY 未设置；请设置后重试，或使用 --mock。")

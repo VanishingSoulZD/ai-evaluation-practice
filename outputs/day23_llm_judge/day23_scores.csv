@@ -1,0 +1,9 @@
+﻿sample_id,question,reference,prediction,status,error,accuracy,completeness,logic,readability,overall_score,rationale
+s1,法国首都是什么？,巴黎,法国首都是巴黎。,success,,10,10,10,10,10.0,"The answer is factually correct, directly addresses the question, follows a logical sentence structure, and is perfectly readable."
+s2,解释牛顿第一定律。,物体在不受外力时保持静止或匀速直线运动。,牛顿第一定律说没有外力时物体状态不变。,success,,9,8,10,10,9.25,被测答案准确地概括了牛顿第一定律的核心含义（惯性），逻辑清晰且易于理解。相比参考答案，它省略了对“静止或匀速直线运动”的具体描述，但在物理意义上是正确的，完整性略有欠缺。
+s3,将句子翻译为英文：今天天气很好。,The weather is very nice today.,Today weather very good.,success,,6,8,7,5,6.5,"The translation conveys the basic meaning but contains significant grammatical errors, specifically the lack of a verb ('is') and incorrect word order/structure. It is understandable but not grammatically correct English."
+s4,简述光合作用。,植物利用光能把二氧化碳和水转化为有机物并释放氧气。,植物靠阳光制造养分并释放氧气。,success,,8,7,9,10,8.5,被测答案准确描述了光合作用的核心产出（养分和氧气），但忽略了反应物（二氧化碳和水）这一关键要素，导致完整性略有欠缺，但表达简洁明了。
+s5,什么是二分查找？,在有序数组中通过不断折半定位目标的搜索算法。,二分查找就是从中间开始比较并缩小范围。,success,,8,7,8,9,8.0,被测答案准确描述了二分查找的核心机制，但遗漏了“有序数组”这一关键前提条件，导致完整性略有欠缺。
+s6,列举两种可再生能源。,太阳能、风能。,煤炭和石油。,success,,1,1,1,10,3.25,被测答案提供的煤炭和石油属于不可再生能源，与问题要求的可再生能源完全不符，准确性极低。虽然回答了两个选项，但内容错误，导致完整性和逻辑性均无法得分。
+s7,总结：AI 可提升效率但有偏见风险。,AI 能提升生产效率，但需控制偏见与伦理风险。,AI 有好处也有风险。,success,,8,6,9,10,8.25,被测答案准确概括了AI的双面性，但相比参考答案，缺失了对“效率”这一核心价值的明确提及，以及对“伦理风险”这一具体维度的概括，完整性略有不足。
+s8,Python 中列表和元组的区别？,列表可变，元组不可变。,列表和元组都能存多个值，但元组通常不可改。,success,,9,7,9,10,8.75,被测答案准确指出了核心区别（可变性），但未提及列表和元组在语法定义（方括号与圆括号）以及典型应用场景上的差异，完整性略有不足。
