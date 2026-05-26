@@ -79,7 +79,7 @@
 > - 标注规范与人工标注流程；
 > - 一致性指标（Cohen’s Kappa）；
 > - 自动指标（BLEU / ROUGE / METEOR / BERTScore）；
-> - LLM judge 评测入口（OpenCompass / MT-Bench / FastChat 思路）；
+> - LLM-as-a-judge 评测入口（OpenCompass / MT-Bench / FastChat 思路）；
 > - 结果报表与图表输出。
 
 ### 适合的实际意义
@@ -149,7 +149,7 @@
 
 - Cohen’s Kappa 说明（可参考综述/教程，后续迭代文档中会展开）
 - OpenCompass: [https://opencompass.org.cn/](https://opencompass.org.cn/)
-- OpenCompass 文档（LLM judge 相关）: [https://doc.opencompass.org.cn/advanced_guides/llm_judge.html](https://doc.opencompass.org.cn/advanced_guides/llm_judge.html)
+- OpenCompass 文档（LLM-as-a-judge 相关）: [https://doc.opencompass.org.cn/advanced_guides/llm_judge.html](https://doc.opencompass.org.cn/advanced_guides/llm_judge.html)
 - MT-Bench 论文: [https://arxiv.org/abs/2306.05685](https://arxiv.org/abs/2306.05685)
 - FastChat: [https://github.com/lm-sys/fastchat](https://github.com/lm-sys/fastchat)
 - Chatbot Arena: [https://lmarena.ai/](https://lmarena.ai/)
@@ -191,7 +191,7 @@
    - 一份标注规范；
    - 一份双人标注一致性分析；
    - 一套自动指标脚本；
-   - 一份 judge 评测说明；
+   - 一份 LLM-as-a-judge 评测说明；
    - 一份完整报告。
 
 ### 你要产出的文件
@@ -245,7 +245,7 @@ data/day30_raw/
 
 - SQuAD 更适合练“答案是否命中证据 span”；
 - CoQA 更适合练“上下文依赖与多轮对话”；
-- GLUE 更适合练“通用语言理解的分类/匹配判断”。
+- GLUE 更适合作为通用语言理解对照基准，用于补充问答评测与生成式评测链路的任务边界。
 
 ---
 
@@ -276,7 +276,7 @@ data/day30_raw/
 - 优先保留主流数据集原始语义，不重新编造任务；
 - 如果是生成任务，保留参考答案；
 - 如果是问答任务，保留上下文、问题、参考答案；
-- 如果是分类任务，保留输入和标签定义。
+- 对 GLUE 对照样本，保留输入、任务定义与标签含义说明。
 
 ### 你要产出的文件
 
@@ -316,7 +316,7 @@ data/day30_raw/
 - 阅读理解 / 问答抽取；
 - 多轮问答；
 - 文本生成质量判断；
-- 简单分类或匹配判断（如 GLUE 中可复用的一类任务）。
+- 生成质量判断与问答可回答性判断（可参考 GLUE 任务定义做边界对照）。
 
 ### 你要产出的文件
 
@@ -416,7 +416,7 @@ data/day30_raw/
 
 1. 同一批样本用两份标注结果进行对照。
 2. 找出所有分歧样本。
-3. 对分歧进行分类：
+3. 对分歧进行类型归因：
    - 标签歧义；
    - 规则理解偏差；
    - 样本本身信息不足；
@@ -587,7 +587,7 @@ data/day30_raw/
 
 ---
 
-## Day 41：理解 OpenCompass 的 LLM judge 思路
+## Day 41：理解 OpenCompass 的 LLM-as-a-judge 思路
 
 ### 目标
 
@@ -595,10 +595,10 @@ data/day30_raw/
 
 ### 任务
 
-1. 阅读 OpenCompass 的 LLM judge 文档。
+1. 阅读 OpenCompass 的 LLM-as-a-judge 文档。
 2. 阅读 MT-Bench 论文，理解为什么开放式回答不能只靠 n-gram 指标。
 3. 阅读 FastChat 与 Chatbot Arena 的基本思路。
-4. 写出一份 judge 评测说明。
+4. 写出一份 LLM-as-a-judge 评测说明。
 
 ### 你需要理解的论文精华
 
@@ -613,7 +613,7 @@ data/day30_raw/
 
 #### OpenCompass judge
 
-OpenCompass 提供了可复用的 LLM judge 组件，适合把你的评测任务组织成统一的评测格式。
+OpenCompass 提供了可复用的 LLM-as-a-judge 组件，适合把你的评测任务组织成统一的评测格式。
 
 #### FastChat / Chatbot Arena
 
@@ -653,7 +653,7 @@ FastChat 是一个支持训练、服务、评测聊天模型的平台；Chatbot 
    - 指标解释与适用范围说明。
 
 4. **judge 层**
-   - LLM judge 的设计说明；
+   - LLM-as-a-judge 的设计说明；
    - OpenCompass / MT-Bench / FastChat 参考关系说明；
    - 至少一个简单的 judge 评审示例。
 
@@ -704,7 +704,7 @@ FastChat 是一个支持训练、服务、评测聊天模型的平台；Chatbot 
 - 在 Label Studio / doccano 中完成标注闭环；
 - 用 Cohen’s Kappa 做一致性分析；
 - 用 BLEU / ROUGE / METEOR / BERTScore 做自动评测；
-- 理解并组织 LLM judge 评测；
+- 理解并组织 LLM-as-a-judge 评测；
 - 输出一份结构完整、可复用、可解释的评测报告。
 
 ---
