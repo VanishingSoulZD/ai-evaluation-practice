@@ -1,0 +1,23 @@
+{
+  "sst2": [
+    {"idx": 0, "sentence": "a charming and often affecting journey.", "label": 1},
+    {"idx": 1, "sentence": "unfunny and visually bland.", "label": 0},
+    {"idx": 2, "sentence": "a predictable but warm comedy.", "label": 1},
+    {"idx": 3, "sentence": "a tedious and incoherent script.", "label": 0},
+    {"idx": 4, "sentence": "smart, fast, and emotionally grounded.", "label": 1}
+  ],
+  "mrpc": [
+    {"idx": 0, "sentence1": "The company released earnings on Tuesday.", "sentence2": "Earnings were reported by the company Tuesday.", "label": 1},
+    {"idx": 1, "sentence1": "He denied all allegations in court.", "sentence2": "He admitted every allegation in court.", "label": 0},
+    {"idx": 2, "sentence1": "The storm caused delays at the airport.", "sentence2": "Flights were delayed because of the storm.", "label": 1},
+    {"idx": 3, "sentence1": "The bill passed in the senate.", "sentence2": "The senate rejected the bill.", "label": 0},
+    {"idx": 4, "sentence1": "Prices rose sharply in April.", "sentence2": "April saw a sharp increase in prices.", "label": 1}
+  ],
+  "mnli": [
+    {"idx": 0, "premise": "A soccer game with multiple males playing.", "hypothesis": "Some men are playing a sport.", "label": 0},
+    {"idx": 1, "premise": "A woman is reading in a cafe.", "hypothesis": "A woman is sleeping at home.", "label": 2},
+    {"idx": 2, "premise": "Children are outdoors building a snowman.", "hypothesis": "Kids are outside in winter.", "label": 1},
+    {"idx": 3, "premise": "Two dogs run through a field.", "hypothesis": "Animals are moving in open grass.", "label": 0},
+    {"idx": 4, "premise": "A man cooks dinner in a kitchen.", "hypothesis": "Someone is preparing food.", "label": 0}
+  ]
+}
