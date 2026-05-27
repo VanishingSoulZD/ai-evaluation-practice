@@ -1,0 +1,50 @@
+<View>
+  <Header value="Day33 MVP Text Labeling (Single-Page Unified Template)" />
+
+  <View style="padding: 8px; border: 1px solid #ddd; margin-bottom: 12px;">
+    <Header value="Metadata" />
+    <Text name="meta_sample_id" value="$sample_id" />
+    <Text name="meta_task_type" value="$task_type" />
+    <Text name="meta_source_dataset" value="$source_dataset" />
+    <Text name="meta_difficulty_tag" value="$difficulty_tag" />
+    <Text name="meta_split" value="$split" />
+  </View>
+
+  <View style="padding: 8px; border: 1px solid #ddd; margin-bottom: 12px;">
+    <Header value="Context" />
+    <Text name="context" value="$context" />
+
+    <Header value="Question" />
+    <Text name="question" value="$question" />
+
+    <Header value="Reference" />
+    <Text name="reference" value="$reference" />
+
+    <Header value="History" />
+    <Text name="history" value="$history" />
+  </View>
+
+  <Header value="Annotation Label" />
+  <Choices name="annotation_label" toName="context" choice="single" showInLine="true">
+    <Choice value="SUPPORTED" />
+    <Choice value="UNSUPPORTED" />
+    <Choice value="MULTI_ANSWER" />
+    <Choice value="AMBIGUOUS_SPAN" />
+    <Choice value="DIALOGUE_GOOD" />
+    <Choice value="DIALOGUE_BAD" />
+    <Choice value="CLASS_A" />
+    <Choice value="CLASS_B" />
+    <Choice value="NEED_REVIEW" />
+  </Choices>
+
+  <Header value="Evidence Span (for qa_span)" />
+  <Labels name="evidence_label" toName="context">
+    <Label value="EVIDENCE" background="#ffd666" />
+  </Labels>
+
+  <Header value="Final Answer" />
+  <TextArea name="final_answer" toName="context" placeholder="final answer or N/A" rows="2" />
+
+  <Header value="Rationale" />
+  <TextArea name="rationale" toName="context" placeholder="rule_id + short reason" rows="3" />
+</View>

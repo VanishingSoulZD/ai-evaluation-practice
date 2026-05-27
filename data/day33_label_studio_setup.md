@@ -209,3 +209,109 @@ uv pip install label-studio
 uv run label-studio --version
 uv run label-studio start
 ```
+
+---
+
+## 10. Day33 MVP 标注界面配置落地（Task 3）
+
+本节给出可直接导入 Label Studio 的 **单文件 XML** MVP 配置，目标是先跑通 Day33 标注闭环，不引入多项目、多页面或复杂路由。
+
+### 10.1 配置文件位置
+
+- `configs/labelstudio/day33_mvp_label_config.xml`
+
+### 10.2 如何导入 XML 配置
+
+1. 启动 Label Studio：
+   - `uv run label-studio start`
+2. 创建或打开 Day33 项目（建议单项目，例如 `iter033-day33-mvp`）。
+3. 进入项目设置中的 **Labeling Interface**。
+4. 选择代码/XML 编辑模式。
+5. 将 `configs/labelstudio/day33_mvp_label_config.xml` 内容粘贴并保存。
+6. 回到 Data Import，导入 `data/day31_samples.jsonl`。
+7. 打开任务检查字段和标签是否正常显示。
+
+> 本 MVP 采用单页面统一模板，不创建多 XML，不做任务路由。
+
+### 10.3 字段展示说明（与 day31 schema 对齐）
+
+界面展示字段如下（按顺序）：
+
+1. `context`：主判定文本，所有 span 标注统一绑定该字段。
+2. `question`：问题文本，用于问答判定。
+3. `reference`：参考答案，MVP 阶段允许直接显示。
+4. `history`：对话历史，按字符串原样显示，不做 prettify。
+
+同时展示元信息：
+
+- `sample_id`
+- `task_type`
+- `source_dataset`
+- `difficulty_tag`
+- `split`
+
+### 10.4 标签用途说明
+
+主标签控件：`annotation_label`（单选）
+
+- `SUPPORTED`：答案被上下文直接支持。
+- `UNSUPPORTED`：答案不被上下文支持或冲突。
+- `MULTI_ANSWER`：存在多个可支持答案且无法唯一化。
+- `AMBIGUOUS_SPAN`：答案可支持，但证据边界难以唯一。
+- `DIALOGUE_GOOD`：对话类回复质量可接受。
+- `DIALOGUE_BAD`：对话类回复质量不可接受。
+- `CLASS_A`：分类任务占位标签 A（MVP）。
+- `CLASS_B`：分类任务占位标签 B（MVP）。
+- `NEED_REVIEW`：信息不足或规则冲突，需复核。
+
+### 10.5 task_type 与标签映射（MVP 口径）
+
+- `qa_span`：
+  - 首选：`SUPPORTED / UNSUPPORTED / MULTI_ANSWER / AMBIGUOUS_SPAN`
+  - 必要时：`NEED_REVIEW`
+- `qa_dialogue`：
+  - 首选：`DIALOGUE_GOOD / DIALOGUE_BAD`
+  - 必要时：`NEED_REVIEW`
+- `classification`：
+  - 暂用：`CLASS_A / CLASS_B`
+  - 必要时：`NEED_REVIEW`
+
+### 10.6 Evidence span 使用说明
+
+- 控件名：`evidence_label`
+- 标签值：`EVIDENCE`
+- 绑定目标：`toName="context"`
+
+使用规则：
+
+1. 仅在 `qa_span` 任务中要求标注 evidence span。
+2. span 应尽量满足“最小充分证据”。
+3. `UNSUPPORTED` 场景可不标 span。
+4. 若证据边界争议明显，可使用 `AMBIGUOUS_SPAN` 并在 `rationale` 记录原因。
+
+### 10.7 final_answer 与 rationale 填写要求
+
+- `final_answer`：
+  - 填最终答案文本；
+  - 若不可支持可填 `N/A`。
+
+- `rationale`（必须保留）：
+  - 填规则编号 + 简短理由（例如：`RC-8.1-R3: no direct evidence in context`）；
+  - 用于后续 disagreement analysis、adjudication、failure analysis。
+
+### 10.8 为什么采用当前 MVP 方案
+
+1. 符合 Day33 目标：先跑通“导入 → 标注 → 导出”闭环。
+2. 单 XML、单页面，降低配置复杂度与维护成本。
+3. 用 `annotation_label` 避免与数据字段 `label` 混淆。
+4. 统一将 span 绑定 `context`，便于后续一致性复核。
+5. 兼容 `qa_span / qa_dialogue / classification` 三类任务，避免过早工程化拆分。
+
+### 10.9 已知限制（MVP）
+
+1. 未对不同 `task_type` 做动态隐藏/显示控件。
+2. `classification` 仅使用占位标签 `CLASS_A/CLASS_B`。
+3. `history` 原样字符串展示，可读性一般。
+4. `reference` 默认可见，可能对盲标产生影响（后续可在流程层面约束）。
+5. 未引入自动校验逻辑（如强制特定任务必须标 span）。
+
