@@ -7,6 +7,7 @@ from sklearn.metrics import cohen_kappa_score
 
 MAX_ROWS = 50
 REPORT_PATH = Path("reports/day36_kappa_report.csv")
+LABEL_REPORT_PATH = Path("reports/day36_label_disagreement_report.csv")
 
 
 def parse_args() -> argparse.Namespace:
@@ -164,6 +165,61 @@ def build_task_level_report(aligned: pd.DataFrame) -> pd.DataFrame:
     return report[["task_type", "kappa", "raw_agreement", "sample_count"]]
 
 
+def build_label_disagreement_report(aligned: pd.DataFrame) -> pd.DataFrame:
+    total_sample_count = len(aligned)
+    unique_labels = pd.unique(pd.concat([aligned["label_A"], aligned["label_B"]], ignore_index=True))
+
+    records = []
+    for label in sorted(unique_labels.astype(str)):
+        involved = (aligned["label_A"] == label) | (aligned["label_B"] == label)
+        total_involved = int(involved.sum())
+        if total_involved == 0:
+            continue
+
+        agree_count = int(((aligned["label_A"] == label) & (aligned["label_B"] == label)).sum())
+        disagree_count = int((involved & (aligned["label_A"] != aligned["label_B"])).sum())
+        disagreement_rate = disagree_count / total_involved
+        support_ratio = total_involved / total_sample_count
+
+        records.append(
+            {
+                "label": label,
+                "task_type": "overall",
+                "total_involved": total_involved,
+                "agree_count": agree_count,
+                "disagree_count": disagree_count,
+                "disagreement_rate": disagreement_rate,
+                "support_ratio": support_ratio,
+            }
+        )
+
+    report = pd.DataFrame(records)
+    if report.empty:
+        return pd.DataFrame(
+            columns=[
+                "label",
+                "task_type",
+                "total_involved",
+                "agree_count",
+                "disagree_count",
+                "disagreement_rate",
+                "support_ratio",
+            ]
+        )
+
+    return report[
+        [
+            "label",
+            "task_type",
+            "total_involved",
+            "agree_count",
+            "disagree_count",
+            "disagreement_rate",
+            "support_ratio",
+        ]
+    ].sort_values(by=["disagreement_rate", "disagree_count"], ascending=[False, False])
+
+
 def main() -> None:
     args = parse_args()
     labels_a, labels_b, aligned = load_and_align(args.input, args.max_rows)
@@ -174,8 +230,11 @@ def main() -> None:
     overall_kappa = cohen_kappa_score(labels_a, labels_b)
 
     report_df = build_task_level_report(aligned)
+    label_report_df = build_label_disagreement_report(aligned)
+
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     report_df.to_csv(REPORT_PATH, index=False)
+    label_report_df.to_csv(LABEL_REPORT_PATH, index=False)
 
     print(f"input_file: {args.input}")
     print(f"sample_count: {sample_count}")
@@ -183,6 +242,18 @@ def main() -> None:
     print(f"overall_kappa: {overall_kappa:.4f}")
     print(f"task_level_report: {REPORT_PATH}")
     print(report_df.to_string(index=False))
+
+    print(f"label_disagreement_report: {LABEL_REPORT_PATH}")
+    print(label_report_df.to_string(index=False))
+
+    high_risk = label_report_df[label_report_df["total_involved"] >= 3]
+    high_risk = high_risk.sort_values(by=["disagreement_rate", "disagree_count"], ascending=[False, False])
+
+    print("Top high-risk labels (total_involved >= 3):")
+    if high_risk.empty:
+        print("(none)")
+    else:
+        print(high_risk.head(10).to_string(index=False))
 
 
 if __name__ == "__main__":
