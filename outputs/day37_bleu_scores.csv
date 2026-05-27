@@ -1,0 +1,5 @@
+sample_id,bleu,reference,candidate
+s1_exact_match,1.0,The cat is on the mat,The cat is on the mat
+s2_word_order_changed,0.0,The cat is on the mat,On the mat the cat is
+s3_paraphrase_synonym,0.0,The movie was very good,The film was really great
+s4_very_short_output,0.0,The weather is warm and sunny today,warm
