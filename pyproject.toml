@@ -17,4 +17,5 @@ dependencies = [
     "nltk>=3.9.4",
     "rouge-score>=0.1.2",
     "python-multipart>=0.0.29",
+    "bert-score>=0.3.13",
 ]
