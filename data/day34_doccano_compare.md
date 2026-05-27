@@ -1,222 +1,239 @@
-# Day34 doccano Mapping MVP
+# Day34：doccano vs Label Studio 对比（AI 评测链路）
 
-## 1. 背景与目标
+> 背景：Day33 已完成 Label Studio MVP，Day34 正在完成 doccano MVP。本文只讨论两者在当前评测链路中的工具定位与数据结构差异，不做泛化选型。
 
-- Day31：已完成样本统一，形成统一 `task_type` 与基础字段结构。
-- Day32：已定义可执行标注规范与标签口径。
-- Day33：已完成 Label Studio MVP 闭环。
-- 本文档目标：为 Day34 的 doccano 实操提供最小映射依据，确保任务路由稳定、标签一致、导出可复用。
+## 1. 两个平台定位
 
----
+- **doccano**：偏传统 NLP 标注平台，强调“轻量、标准任务、快速上手”。
+- **Label Studio**：偏通用 AI 数据标注平台，强调“可配置、可扩展、多任务形态”。
 
-## 2. 映射原则
+在本项目语境下，两者都属于**人工标注入口层**，不是最终评测器本身。
 
-- **最小闭环优先**：先保证“可导入 → 可标注 → 可导出”的最小链路，不扩展复杂流程。
-- **单项目单职责**：一个项目只解决一种核心标注目标，避免字段与流程过载。
-- **标签与 Day32 对齐**：标签集合与定义不新增、不改名，避免口径漂移。
-- **保留 `sample_id`**：全过程保留主键，确保导出后可追溯、可 join、可复核。
+## 2. 适合任务
 
----
+### doccano 更适合
 
-## 3. `task_type` → doccano project type 映射表
+- 文本分类（如支持/不支持判定）
+- 序列标注（NER/关键词片段）
+- 结构较固定的文本任务
+- 目标是快速建立“可导出+可解析”的 NLP 基线
 
-| task_type | doccano type | MVP 是否纳入 | 原因 |
-| --------- | ------------ | ----------- | ---- |
-| `qa_span` | `Seq2Seq`（主） + `Text Classification`（辅） | 是 | `qa_span` 需要“答案产出 + 支持性判断”，单一项目难覆盖；MVP 采用双项目拆分更稳妥。 |
-| `classification` | `Text Classification` | 是 | 与 doccano 原生分类能力直接匹配，导入导出简单。 |
-| `quality_judge` | `Text Classification` | 是 | 质量判断本质是有限标签判定，适配分类项目。 |
-| `ner` / `span_extraction` | `Sequence Labeling` | 否（未来扩展） | 技术上适配，但不属于本轮最小闭环优先范围。 |
-| `qa_dialogue` | 不建议纳入 doccano MVP | 否 | 多轮上下文与复杂流程更依赖灵活界面与流程编排，MVP 阶段成本高、收益低。 |
+### Label Studio 更适合
 
----
+- 需要同时展示多个字段并灵活排版的任务
+- 任务规则会频繁迭代、需要反复改界面
+- 后续可能扩展到多模态或复杂工作流的任务
 
-## 4. 不适合 doccano MVP 的任务
+## 3. UI 灵活性
 
-以下任务不纳入 doccano MVP，优先放在 Label Studio：
+- **doccano**：UI 路径短、操作直接，但可定制空间相对有限；更像“固定范式内高效率”。
+- **Label Studio**：UI 可通过配置进行更细粒度控制；代价是学习/维护成本更高。
 
-- **多轮复杂工作流**
-  - 典型特征：多轮 history、阶段化判断、跨回合依赖。
-  - 原因：doccano MVP 项目形态更偏单样本单任务，不适合流程型编排。
+结论：如果当前阶段优先“尽快标起来”，doccano 的交互摩擦通常更低；如果优先“界面表达复杂任务语义”，Label Studio 更稳。
 
-- **多字段联合裁决**
-  - 典型特征：同条样本需同时产出主标签、冲突等级、裁决状态、规则引用。
-  - 原因：doccano 可做基础标注，但联合流程与状态管理成本较高。
+## 4. schema 灵活性
 
-- **复杂 evidence workflow**
-  - 典型特征：需要稳定维护证据片段、边界争议与复核流转。
-  - 原因：MVP 阶段优先保证主标签与答案闭环，复杂证据流程更适合 Label Studio 的灵活配置。
+- **doccano**：项目类型驱动 schema，整体更规整、更固定。
+- **Label Studio**：界面配置驱动 schema 映射，字段组织更自由。
 
-**结论**：doccano 用于标准 NLP 最小任务闭环；Label Studio 承载复杂多字段、多阶段流程。
+工程含义：
 
----
+- doccano 输出约束更强，脚本端更容易形成稳定解析模板；
+- Label Studio 表达能力更强，但需要更明确的“配置版本管理 + 映射规则管理”。
 
-## 5. 推荐 MVP 项目拆分
+## 5. 导出结构
 
-### Project A — QA Answer (Seq2Seq)
+在 MVP 阶段应重点看三件事：`sample_id` 是否保留、标签是否稳定、结构是否可批处理。
 
-- 目标：生成/抽取最终答案文本。
-- 输入字段：
-  - `question`
-  - `context`
-- 输出字段：
-  - `final_answer`
+- **doccano**：导出结构通常更贴近标准 NLP 管道，字段层级相对直接。
+- **Label Studio**：导出信息更丰富，但原始字段与标注结果可能分层更复杂，常需要二次展平。
 
-### Project B — QA Support Classification
+## 6. pandas / scripts 兼容性
 
-- 目标：对“答案是否被上下文直接支持”做统一标签判断。
-- 输入字段：
-  - `question`
-  - `context`
-  - `answer_candidate` / `reference`
-- 标签集合（与 Day32 对齐）：
-  - `SUPPORTED`
-  - `UNSUPPORTED`
-  - `MULTI_ANSWER`
-  - `AMBIGUOUS_SPAN`
+- **doccano**：
+  - 更容易直接 `read_json/read_csv` 后进入聚合统计；
+  - 适合快速写“标签分布、按任务类型切片”的脚本。
+- **Label Studio**：
+  - 同样可进入 pandas，但往往先做一层 schema normalize；
+  - 适合在已有映射器后做复杂分析。
 
----
+实操建议：统一中间层 schema（如 `sample_id/task_type/label/tool/config_version`），避免脚本绑定平台私有结构。
 
-## 6. 最小字段结构
 
-### 必需字段
 
-- `sample_id`
-- `task_type`
-- `question`
-- `context`
+## 6.1 推荐统一 export schema（doccano MVP）
 
-### 可选字段
+为保证 Day35/36 可直接进入一致性与冲突分析，建议先定义**平台无关的导出中间 schema**。
 
-- `reference`
-- `answer_candidate`
+### 必须保留字段（最低集合）
 
-### 暂缓字段
+- `sample_id`：样本唯一标识（来自 day31 原始样本）
+- `task_type`：任务类型（如 `qa_span` / `qa_dialogue` / `classification`）
+- `label`：本次人工主标签（单值）
+- `annotator`：标注者标识（用户名或工号）
+- `tool`：固定写入 `doccano` 或 `label_studio`
+- `project_id`：平台内项目标识（便于回溯）
+- `record_id`：平台内任务/数据行标识
+- `annotation_id`：平台内标注结果标识
+- `created_at` / `updated_at`：结果时间戳（UTC）
+- `schema_version`：统一 schema 版本（如 `eval_export_v1`）
+- `config_version`：标注配置版本（如 `day34_doccano_tc_v1`）
 
-- `evidence_span`
-- `rule_id`
-
-说明：暂缓字段不在本轮 doccano MVP 强绑定，避免阻塞闭环；后续如需增强复核能力再引入。
-
----
-
-## 7. 风险与缓解
-
-- **风险：`sample_id` 丢失**
-  - 影响：导出结果无法回写原样本，后处理断链。
-  - 最小缓解动作：导入前检查 `sample_id` 存在；导出后抽样校验主键可追溯。
-
-- **风险：label 漂移**
-  - 影响：同一任务跨平台语义不一致，统计不可比。
-  - 最小缓解动作：固定只允许 Day32 定义标签；项目配置中禁止临时新增同义标签。
-
-- **风险：`task_type` 路由错误**
-  - 影响：样本进入错误项目，造成标注失真。
-  - 最小缓解动作：导入前做一次 `task_type -> project` 映射核对清单。
-
-- **风险：`qa_span` 与单一 project type 不完全匹配**
-  - 影响：单项目无法同时稳定承载答案与支持性判断。
-  - 最小缓解动作：采用 A/B 双项目拆分；分别产出 `final_answer` 与支持性标签。
-
----
-
-## 8. Definition of Done
-
-满足以下条件即判定本任务完成：
-
-- 能成功导入 doccano（按映射进入对应项目）。
-- 能完成小批量样本标注（至少覆盖 `qa_span` 闭环）。
-- 能导出 JSONL。
-- 导出结果中 `sample_id` 未丢失。
-- 导出结果可进入 pandas 后处理（可按 `sample_id` join 源样本）。
-
-## 9. doccano MVP Export Schema
-
-### 9.1 设计目标
-
-- 目标是产出“分析友好”的导出结构，直接服务后续 `metrics / pandas / judge` 链路。
-- 不直接暴露 doccano UI 原生结构（通常偏平台内部表示），避免把下游脚本绑定到界面层嵌套字段。
-- 优先 JSONL，因为一行一条样本记录，便于流式处理、版本比对和 pandas 直接读取。
-- MVP 范围只定义最小可消费字段，不引入 ETL、API 或复杂 pipeline。
-
-### 9.2 推荐 JSONL Schema
+### 推荐 JSONL 示例（统一后的单行）
 
 ```json
-{
-  "sample_id": "squad_train_0001",
-  "task_type": "qa_span",
-  "text": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",
-  "label": "UNSUPPORTED",
-  "label_raw": ["UNSUPPORTED"],
-  "label_schema_version": "v1",
-  "annotator": "1",
-  "annotation_id": "5001",
-  "project": "doccano_mvp",
-  "meta": {
-    "source_dataset": "squad",
-    "split": "dev"
-  }
-}
+{"sample_id":"day31_000123","task_type":"qa_span","label":"SUPPORTED","annotator":"u_alice","tool":"doccano","project_id":12,"record_id":3456,"annotation_id":7890,"created_at":"2026-05-27T10:20:31Z","updated_at":"2026-05-27T10:21:08Z","schema_version":"eval_export_v1","config_version":"day34_doccano_tc_v1"}
 ```
 
-最小解析约定：
-- 每行一个完整 JSON 对象（UTF-8，无 BOM）。
-- 顶层字段优先扁平化；`meta` 仅保留轻量补充信息。
-- `label` 作为主消费列；`label_raw` 用于无损保留原始标签形态。
+说明：上例是**normalize 后的目标格式**，不是要求平台原生导出完全同构。
 
-### 9.3 必须保留字段
+## 6.2 sample_id 与 label 保留策略
 
-| field | required | reason |
-| ----- | -------- | ------ |
-| `sample_id` | yes | 跨平台唯一追踪键，用于回写 Day31 样本与 join 分析结果。 |
-| `task_type` | yes | 决定评测路由与指标分桶，避免任务混算。 |
-| `label` | yes | 下游统计/一致性分析的主消费标签列。 |
-| `text` | yes | 最小可复核输入文本，保证分析可追溯。 |
-| `annotation_id` | yes | 区分同 `sample_id` 的多次/多人标注记录。 |
-| `annotator` | yes | 支持人间一致性与冲突归因分析。 |
+### sample_id 保留策略
 
-### 9.4 sample_id 保留策略
+1. 导入 doccano 前，确保 `sample_id` 已在源数据中稳定存在；
+2. 导出后若出现字段层级变化，normalize 时必须把 `sample_id` 提升到顶层；
+3. 禁止在清洗阶段重写 `sample_id`（只允许 trim/类型标准化）；
+4. 若出现缺失 `sample_id`，该条记录标记为 `invalid_record`，不得进入 metrics。
 
-- 优先保留 Day31 原值（例如 `squad_train_0001`）。
-- 不重写 ID，不引入新编码规则。
-- 若导出时 `sample_id` 位于 metadata，必须提升回顶层 `sample_id` 字段。
-- fallback reconstruct 策略（仅在缺失时）：
-  1. 尝试使用导入阶段保留的外部映射键恢复；
-  2. 若仍缺失，使用 `source_dataset + local_row_index` 生成临时 ID；
-  3. 同时打标 `id_reconstructed=true`（可放在 `meta`），防止误判为原始主键。
+### label 保存策略
 
-### 9.5 label 保存策略
+1. 统一主标签字段名为 `label`（跨平台一致）；
+2. 多标签任务需拆分：
+   - `label` 存主判定；
+   - 可选 `label_secondary` / `label_list` 存补充；
+3. 空标签记录不删除，保留并标记 `label_status="empty"`，用于统计漏标率；
+4. Label Studio 的控件名（如 `annotation_label`）在 normalize 后映射为统一 `label`。
 
-- `label`：规范化主标签（字符串），用于统计与过滤。
-- `label_raw`：原始标签表示（数组/原生结构），用于无损追溯。
-- `label_schema_version`：当前标签约定版本（MVP 固定 `v1`）。
+## 6.3 normalize 层建议（pandas/read_json 兼容）
 
-约束：
-- 空标签统一为 `null`。
-- 禁止混用 `""` 与 `[]` 表示空标签。
-- `qa_span` 标签命名遵循 Day32：`SUPPORTED` / `UNSUPPORTED` / `MULTI_ANSWER` / `AMBIGUOUS_SPAN`。
+建议把平台导出接入两段式处理：
 
-### 9.6 pandas 兼容建议
+1. **raw loader**：只负责读取平台原始 JSON/JSONL/CSV；
+2. **normalizer**：只负责字段映射、类型收敛、主键生成与校验。
 
-- 直接读取：`pd.read_json(path, lines=True)`。
-- 扁平字段优先：将核心分析列放顶层，降低 `json_normalize` 依赖。
-- `annotation_id` 建议字符串化，避免与其他数据源 merge 时出现 int/string 混型。
-- 导出 CSV 时，先将 `label_raw` 序列化为 JSON 字符串列，再写盘。
+### pandas 兼容建议
 
-### 9.7 与 Label Studio export 的区别
+- JSONL 优先使用：`pd.read_json(path, lines=True)`；
+- 对嵌套结构使用 `json_normalize` 或显式展开函数，避免“隐式列爆炸”；
+- 时间字段统一转 UTC 字符串（ISO-8601）；
+- 主键字段统一转 string，避免 int/str 混用导致 join 失败。
 
-| 对比项 | Label Studio | doccano MVP |
-| --- | ------------ | ----------- |
-| 嵌套层级 | 常见 `data/meta/annotations/result` 多层嵌套 | 顶层扁平字段优先，仅保留轻量 `meta` |
-| UI 结构暴露程度 | 更接近平台原生标注记录结构 | 主动屏蔽 UI 细节，面向分析消费 |
-| 分析友好性 | 需先抽取 `result` 才能聚合 | `label/sample_id/task_type` 可直接统计 |
-| 下游解析复杂度 | 解析路径长、字段分布分散 | 解析路径短、join 与分桶更直接 |
+### normalize 输出校验（最小）
 
-### 9.8 风险与缓解
+- 主键唯一性：`(sample_id, annotator, round_id)` 不重复；
+- 必填完整性：`sample_id/task_type/label/tool/schema_version` 非空；
+- 标签合法性：`label` 必须在当轮标签集合内。
 
-| 风险 | 最小缓解动作 |
-| ---- | ------------ |
-| `task_type` 差异导致标签形态不一致 | 按 `task_type` 固定最小字段契约；MVP 仅保证通用字段 + `label/label_raw`。 |
-| 多标注者冲突（同 `sample_id` 多条记录） | 主键改为 `sample_id + annotation_id`，并保留 `annotator`。 |
-| 空标签处理不一致 | 统一空值为 `null`，导入/导出检查禁止 `""`、`[]` 作为空标签。 |
-| schema 漂移影响脚本稳定性 | 增加 `label_schema_version`，脚本按版本分支解析。 |
-| Day31 中历史空 `label` 被误当有效值 | 解析时先做空值标准化，再进入指标统计。 |
+## 6.4 与 Label Studio export 的结构差异（工程视角）
+
+| 对比点 | doccano 常见形态 | Label Studio 常见形态 | normalize 动作 |
+|---|---|---|---|
+| 主体结构 | 偏平铺或轻嵌套 | 常见深层嵌套（任务/结果/控件） | 展平并映射统一字段 |
+| 标签位置 | 相对集中 | 可能位于 result 列表内 | 提取主标签到 `label` |
+| 元信息保留 | 项目/记录字段较直接 | 任务 data 与标注 result 分离 | 合并 data + result |
+| 解析成本 | 中低 | 中高 | 统一走 normalizer |
+
+结论：两者都可进入同一评测脚本，但 Label Studio 通常需要更显式的展平规则。
+
+## 6.5 schema 风险与版本管理
+
+### 主要风险
+
+1. 平台升级导致导出字段路径变化；
+2. 标注配置调整导致标签集合变化；
+3. 多人标注时主键设计不足，造成覆盖或重复统计。
+
+### 版本管理约定（MVP）
+
+- `schema_version`：仅描述“统一导出中间层”结构版本；
+- `config_version`：描述当轮标注标签/界面配置版本；
+- `tool_version`：可选记录平台版本，便于回放兼容问题。
+
+### 多标注者主键建议
+
+在 Day35/36 引入双人标注后，建议主键采用：
+
+- 业务主键：`(sample_id, annotator, round_id)`
+- 技术追溯键：`(tool, project_id, record_id, annotation_id)`
+
+其中：
+
+- `round_id` 用于区分复标轮次（如 `r1`/`r2`）；
+- 业务主键用于一致性统计；
+- 技术追溯键用于回查平台原始记录。
+
+
+## 7. MVP 推荐场景
+
+### 推荐 doccano 的场景
+
+1. 目标是本周内快速跑通第二套标注闭环；
+2. 当前任务以文本分类/序列标注为主；
+3. 团队希望先降低操作复杂度，再逐步加流程治理。
+
+### 推荐 Label Studio 的场景
+
+1. 任务字段多、展示逻辑复杂；
+2. 后续要做更复杂 UI/流程编排；
+3. 需要在同一平台承载更多任务形态。
+
+## 8. 不推荐场景
+
+### doccano 不推荐
+
+- 需要高度自定义标注界面与复杂组件组合；
+- 任务输入结构变化频繁，且需要细粒度动态展示策略。
+
+### Label Studio 不推荐（在当前 MVP 阶段）
+
+- 仅做标准文本分类且时间紧、希望最短路径交付；
+- 团队尚未准备好维护较复杂的配置与映射。
+
+## 9. AI 评测链路中的位置
+
+两者在链路中的角色一致：
+
+```text
+统一样本
+  -> 标注平台（doccano / Label Studio）
+  -> 人工标注结果导出
+  -> 统一 schema 转换
+  -> pandas / 统计脚本
+  -> 一致性分析与评测指标
+```
+
+关键不是“选唯一平台”，而是：
+
+1. 标注规范一致；
+2. 导出字段可回溯（尤其 sample_id）；
+3. 跨平台结果可归一到同一分析脚本。
+
+## 10. 对比总表（MVP 结论）
+
+| 维度 | doccano | Label Studio | 当前结论（Day34） |
+|---|---|---|---|
+| 平台定位 | 传统 NLP 标注 | 通用 AI 标注平台 | 都是“标注入口层” |
+| 适合任务 | 分类、序列标注、结构固定文本 | 多字段复杂任务、可扩展任务形态 | 按任务复杂度选择 |
+| UI 灵活性 | 中等，偏固定流程 | 高，可配置能力强 | 灵活性越高，维护成本越高 |
+| Schema 灵活性 | 中等偏低，项目类型约束明显 | 高，配置驱动字段映射 | doccano 更稳，LS 更灵活 |
+| 导出结构 | 相对规整，便于 NLP 脚本消费 | 信息丰富但常需二次展平 | 都可用，LS 需更强映射治理 |
+| pandas 兼容性 | 直接性更好 | 依赖 normalize 层 | 建议统一中间 schema |
+| MVP 推荐 | 快速跑通标准 NLP 闭环 | 复杂任务表达与后续扩展 | Day34 优先 doccano，保留 LS 作为复杂任务平台 |
+
+## 11. 明确 MVP 推荐方案
+
+**当前推荐：双平台并存，但分工明确。**
+
+- **Day34~Day35 的主路径**：以 doccano 作为标准文本任务的快速执行平台。
+- **复杂任务或后续扩展路径**：保留 Label Studio 作为高灵活度平台。
+- **脚本侧统一策略**：不让分析脚本直接绑定某一平台导出；统一先过 normalize 层。
+
+这能同时满足“短期交付速度”和“中期扩展空间”。
+
+## 12. 当前 MVP 限制
+
+1. 结论基于 Day33/Day34 的最小闭环，不代表生产环境全量能力对比；
+2. 尚未引入双标仲裁与一致性统计（如 Kappa）结果作为量化依据；
+3. 尚未完成大规模样本压测，当前结论偏工程可用性而非性能上限；
+4. 导出后统一 schema 仍需在 Day35 继续固化。
