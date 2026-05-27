@@ -1,6 +1,13 @@
-sample_id,experiment_type,meteor,bleu,rougeL,reference,candidate
-exact_1,exact_match,0.9985422740524781,1.0,1.0,The cat sits on the warm mat,The cat sits on the warm mat
-syn_1,synonym_paraphrase,0.5260416666666666,0.10266900960803409,0.6666666666666666,The boy is very happy today,The child is very joyful today
-morph_1,stemming_morphology,0.9985422740524781,0.488923022434901,1.0,The runner runs quickly in the park,The runner running quickly in the park
-verbose_1,redundancy_verbose_output,0.8586206896551724,0.2891784933232572,0.5555555555555556,The project passed all tests,The project passed all tests with extra repeated details and many unnecessary words
-syn_2,synonym_paraphrase,0.16666666666666666,0.048549177170732344,0.3333333333333333,He solved the difficult problem fast,He fixed the hard issue quickly
+sample_id,experiment_type,focus_tag,notes,meteor,bleu,rougeL,reference,candidate
+exact_1,exact_match,control,Control case with perfect surface overlap.,0.9985422740524781,1.0,1.0,The cat sits on the warm mat,The cat sits on the warm mat
+exact_2,exact_match,control,Another control sample to stabilize exact-match average.,0.9976851851851852,1.0,1.0,She reads a book every night,She reads a book every night
+stem_1,stemming_effect,stemming,Run/running morphology with minimal lexical change.,0.9985422740524781,0.488923022434901,1.0,The runner runs quickly in the park,The runner running quickly in the park
+stem_2,stemming_effect,stemming,Solve/solving morphology to test stem tolerance.,0.9976851851851852,0.537284965911771,1.0,They solve difficult puzzles at school,They solving difficult puzzles at school
+stem_3,stemming_effect,stemming,Analyze/analyzed morphology while keeping content intact.,0.996,0.28574404296988,1.0,Scientists analyze the data carefully,Scientists analyzed the data carefully
+syn_1,synonym_match,synonym,Boy/child and happy/joyful synonym replacement.,0.5260416666666666,0.10266900960803409,0.6666666666666666,The boy is very happy today,The child is very joyful today
+syn_2,synonym_match,synonym,Difficult/hard and problem/issue synonym replacement.,0.625,0.21711852081087685,0.6666666666666666,He solved the difficult problem fast,He solved the hard issue fast
+syn_3,synonym_match,synonym,Small synonym paraphrase with preserved sentence structure.,0.25,0.05372849659117709,0.5,The movie was funny and exciting,The film was amusing and thrilling
+surface_1,surface_mismatch,surface,Semantic closeness with lower direct lexical overlap.,0.125,0.03303164318013808,0.25,The team completed the project before the deadline,The group finished the assignment ahead of schedule
+surface_2,surface_mismatch,surface,Paraphrase with multiple substitutions and phrase shifts.,0.07042253521126761,0.02777619034011792,0.13333333333333333,Please keep the room clean and quiet,Kindly maintain silence and cleanliness in this area
+order_1,order_or_noise,order,Word-order perturbation with mostly identical tokens.,0.7106481481481481,0.14953487812212207,0.5,The teacher explained the lesson clearly,Clearly the lesson explained the teacher
+noise_1,order_or_noise,noise,Adds redundant tail to show precision sensitivity.,0.8586206896551724,0.2891784933232572,0.5555555555555556,The project passed all tests,The project passed all tests with extra repeated details and many unnecessary words
