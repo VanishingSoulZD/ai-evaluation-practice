@@ -1,0 +1,144 @@
+[
+  {
+    "id": 101,
+    "data": {
+      "sample_id": "squad_train_0001",
+      "source_dataset": "squad",
+      "task_type": "qa_span",
+      "input": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",
+      "context": "Architecturally, the school has a Catholic character. Atop the Main Building's gold dome is a golden statue of the Virgin Mary.",
+      "question": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",
+      "reference": "Saint Bernadette Soubirous",
+      "split": "dev"
+    },
+    "meta": {
+      "sample_id": "squad_train_0001",
+      "task_type": "qa_span",
+      "source_dataset": "squad",
+      "difficulty_tag": "easy",
+      "subtask": ""
+    },
+    "annotations": [
+      {
+        "id": 5001,
+        "completed_by": 1,
+        "was_cancelled": false,
+        "created_at": "2026-05-27T10:00:00Z",
+        "updated_at": "2026-05-27T10:02:00Z",
+        "result": [
+          {
+            "from_name": "label",
+            "to_name": "context",
+            "type": "choices",
+            "value": {
+              "choices": [
+                "UNSUPPORTED"
+              ]
+            }
+          },
+          {
+            "from_name": "final_answer",
+            "to_name": "context",
+            "type": "textarea",
+            "value": {
+              "text": [
+                "N/A"
+              ]
+            }
+          },
+          {
+            "from_name": "evidence_span",
+            "to_name": "context",
+            "type": "textarea",
+            "value": {
+              "text": [
+                ""
+              ]
+            }
+          },
+          {
+            "from_name": "rule_id",
+            "to_name": "context",
+            "type": "textarea",
+            "value": {
+              "text": [
+                "RC-8.1-U1"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "data": {
+      "sample_id": "cls_demo_0001",
+      "source_dataset": "demo_evalset",
+      "task_type": "classification",
+      "input": "请判断这条用户反馈是正向还是负向：\"客服回复很慢，问题一直没解决\"",
+      "context": "用户反馈文本：客服回复很慢，问题一直没解决。",
+      "question": "该反馈属于正向还是负向？",
+      "reference": "negative",
+      "split": "dev"
+    },
+    "meta": {
+      "sample_id": "cls_demo_0001",
+      "task_type": "classification",
+      "source_dataset": "demo_evalset",
+      "difficulty_tag": "easy",
+      "subtask": "sentiment"
+    },
+    "annotations": [
+      {
+        "id": 5002,
+        "completed_by": 2,
+        "was_cancelled": false,
+        "created_at": "2026-05-27T10:05:00Z",
+        "updated_at": "2026-05-27T10:07:00Z",
+        "result": [
+          {
+            "from_name": "label",
+            "to_name": "context",
+            "type": "choices",
+            "value": {
+              "choices": [
+                "NEGATIVE"
+              ]
+            }
+          },
+          {
+            "from_name": "final_answer",
+            "to_name": "context",
+            "type": "textarea",
+            "value": {
+              "text": [
+                "negative"
+              ]
+            }
+          },
+          {
+            "from_name": "evidence_span",
+            "to_name": "context",
+            "type": "textarea",
+            "value": {
+              "text": [
+                "客服回复很慢，问题一直没解决"
+              ]
+            }
+          },
+          {
+            "from_name": "rule_id",
+            "to_name": "context",
+            "type": "textarea",
+            "value": {
+              "text": [
+                "CLS-R1"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
