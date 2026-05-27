@@ -1,0 +1,40 @@
+{
+  "source": "data/day30_raw/glue/glue_raw_samples.json",
+  "selection_rule": "仅取每个子任务前3条，不做全量遍历",
+  "tasks": {
+    "sst2": {
+      "label_semantics": {
+        "0": "negative",
+        "1": "positive"
+      },
+      "samples": [
+        {"idx": 0, "sentence": "a charming and often affecting journey.", "label": 1},
+        {"idx": 1, "sentence": "unfunny and visually bland.", "label": 0},
+        {"idx": 2, "sentence": "a predictable but warm comedy.", "label": 1}
+      ]
+    },
+    "mrpc": {
+      "label_semantics": {
+        "0": "not_equivalent",
+        "1": "equivalent"
+      },
+      "samples": [
+        {"idx": 0, "sentence1": "The company released earnings on Tuesday.", "sentence2": "Earnings were reported by the company Tuesday.", "label": 1},
+        {"idx": 1, "sentence1": "He denied all allegations in court.", "sentence2": "He admitted every allegation in court.", "label": 0},
+        {"idx": 2, "sentence1": "The storm caused delays at the airport.", "sentence2": "Flights were delayed because of the storm.", "label": 1}
+      ]
+    },
+    "mnli": {
+      "label_semantics": {
+        "0": "entailment",
+        "1": "neutral",
+        "2": "contradiction"
+      },
+      "samples": [
+        {"idx": 0, "premise": "A soccer game with multiple males playing.", "hypothesis": "Some men are playing a sport.", "label": 0},
+        {"idx": 1, "premise": "A woman is reading in a cafe.", "hypothesis": "A woman is sleeping at home.", "label": 2},
+        {"idx": 2, "premise": "Children are outdoors building a snowman.", "hypothesis": "Kids are outside in winter.", "label": 1}
+      ]
+    }
+  }
+}
