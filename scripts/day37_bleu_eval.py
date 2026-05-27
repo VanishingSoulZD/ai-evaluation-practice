@@ -5,7 +5,7 @@ from pathlib import Path
 import csv
 from statistics import mean
 
-from nltk.translate.bleu_score import sentence_bleu
+from nltk.translate.bleu_score import corpus_bleu, sentence_bleu
 
 
 DEMO_SAMPLES = [
@@ -78,7 +78,24 @@ def compute_sentence_bleu(reference: str, candidate: str) -> float:
     return sentence_bleu([reference_tokens], candidate_tokens)
 
 
-def generate_markdown_report(rows: list[dict[str, str | float]], output_path: Path) -> None:
+def compute_corpus_bleu(samples: list[dict[str, str]]) -> float:
+    list_of_references: list[list[list[str]]] = []
+    hypotheses: list[list[str]] = []
+    for sample in samples:
+        reference_tokens = simple_tokenize(sample["reference"])
+        candidate_tokens = simple_tokenize(sample["candidate"])
+        list_of_references.append([reference_tokens])
+        hypotheses.append(candidate_tokens)
+    return corpus_bleu(list_of_references, hypotheses)
+
+
+def generate_markdown_report(
+    rows: list[dict[str, str | float]],
+    output_path: Path,
+    mean_sentence_bleu: float,
+    corpus_level_bleu: float,
+    delta: float,
+) -> None:
     grouped: dict[str, list[dict[str, str | float]]] = {}
     for row in rows:
         exp_type = str(row["experiment_type"])
@@ -204,7 +221,32 @@ Interpretation:
 
 ---
 
-## 5. Conclusion
+## 5. Sentence-level vs Corpus-level BLEU
+
+- **Mean sentence BLEU**: computed by scoring each sentence independently and then taking the arithmetic mean.
+- **Corpus BLEU**: computed by aggregating n-gram counts across the whole dataset first, then applying BLEU once at corpus level.
+
+### 5.1 Why corpus BLEU is more stable
+
+- Aggregated counts reduce extreme fluctuations from short sentences.
+- Brevity penalty is applied from corpus-level length ratio, which is usually less noisy than sentence-by-sentence penalties.
+- For system-level evaluation, one corpus score better reflects overall generation behavior.
+
+### 5.2 Why corpus BLEU is not the mean of sentence BLEU
+
+- The aggregation order is different (**aggregate-then-score** vs **score-then-average**).
+- Brevity penalty acts differently at corpus scope than sentence scope.
+- Therefore, corpus BLEU is **not** an arithmetic mean of sentence BLEU values.
+
+### 5.3 This run's minimal comparison
+
+- Mean sentence BLEU: **{mean_sentence_bleu:.6f}**
+- Corpus BLEU: **{corpus_level_bleu:.6f}**
+- Delta (corpus - mean sentence): **{delta:.6f}**
+
+---
+
+## 6. Conclusion
 
 BLEU is a foundational **overlap-based** metric that is useful for monitoring textual agreement with references.
 However, BLEU is not equivalent to true semantic quality.
@@ -253,10 +295,49 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
+    mean_sentence_bleu = mean(float(row["bleu"]) for row in rows) if rows else 0.0
+    corpus_level_bleu = compute_corpus_bleu(DEMO_SAMPLES)
+    delta = corpus_level_bleu - mean_sentence_bleu
+
+    summary_output_path = output_dir / "day37_bleu_corpus_summary.csv"
+    with summary_output_path.open("w", encoding="utf-8", newline="") as summary_csv:
+        writer = csv.DictWriter(
+            summary_csv,
+            fieldnames=[
+                "num_samples",
+                "mean_sentence_bleu",
+                "corpus_bleu",
+                "delta_corpus_minus_mean_sentence",
+                "tokenizer",
+                "bleu_impl",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "num_samples": len(rows),
+                "mean_sentence_bleu": round(mean_sentence_bleu, 6),
+                "corpus_bleu": round(corpus_level_bleu, 6),
+                "delta_corpus_minus_mean_sentence": round(delta, 6),
+                "tokenizer": "lower+split",
+                "bleu_impl": "nltk.translate.bleu_score",
+            }
+        )
+
     md_output_path = output_dir / "day37_bleu_analysis.md"
-    generate_markdown_report(rows, md_output_path)
+    generate_markdown_report(rows, md_output_path, mean_sentence_bleu, corpus_level_bleu, delta)
+
+    print(f"INFO|num_samples={len(rows)}")
+    print(
+        "SUMMARY|"
+        f"mean_sentence_bleu={mean_sentence_bleu:.6f}|"
+        f"corpus_bleu={corpus_level_bleu:.6f}|"
+        f"delta={delta:.6f}"
+    )
+    print("NOTE|corpus_bleu_is_not_mean_of_sentence_bleu")
 
     print(f"INFO|csv_saved={output_path}")
+    print(f"INFO|corpus_summary_saved={summary_output_path}")
     print(f"INFO|markdown_saved={md_output_path}")
     print("INFO|day37_bleu_eval_done")
 
