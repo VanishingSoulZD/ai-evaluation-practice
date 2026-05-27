@@ -25,7 +25,11 @@ DEMO_SAMPLES = [
     {"sample_id": "contra_1", "experiment_type": "semantic_contradiction", "expected_relation": "contradiction", "reference": "The store opens at 9 AM every weekday.", "candidate": "The store is closed all weekdays and never opens at 9 AM."},
     {"sample_id": "contra_2", "experiment_type": "semantic_contradiction", "expected_relation": "contradiction", "reference": "The patient improved after treatment.", "candidate": "The patient became much worse after treatment."},
     {"sample_id": "contra_3", "experiment_type": "semantic_contradiction", "expected_relation": "contradiction", "reference": "Revenue increased by twenty percent this quarter.", "candidate": "Revenue dropped by twenty percent this quarter."},
-    {"sample_id": "contra_4", "experiment_type": "semantic_contradiction", "expected_relation": "contradiction", "reference": "The package arrived on Tuesday.", "candidate": "The package did not arrive on Tuesday."},
+    {"sample_id": "contra_4", "experiment_type": "semantic_contradiction", "expected_relation": "contradiction", "reference": "The package arrived on Tuesday.", "candidate": "The package did not arrive on Tuesday.", "notes": "Negation contradiction."},
+    {"sample_id": "factual_geo_1", "experiment_type": "factual_contradiction", "expected_relation": "contradiction", "reference": "Paris is the capital of France.", "candidate": "Lyon is the capital of France.", "notes": "Geography contradiction with high lexical overlap."},
+    {"sample_id": "factual_med_1", "experiment_type": "factual_contradiction", "expected_relation": "contradiction", "reference": "Penicillin is used to treat bacterial infections.", "candidate": "Penicillin is used to treat viral infections.", "notes": "Medical contradiction; only one token changes."},
+    {"sample_id": "factual_pol_1", "experiment_type": "high_overlap_semantic_error", "expected_relation": "polarity_reversal", "reference": "The trial showed the new drug significantly reduced mortality.", "candidate": "The trial showed the new drug significantly increased mortality.", "notes": "Polarity reversal with high overlap."},
+    {"sample_id": "hallu_1", "experiment_type": "hallucination_like", "expected_relation": "added_detail", "reference": "The Eiffel Tower is in Paris.", "candidate": "The Eiffel Tower is in Paris and was built in 1888 by Gustave Eiffel after winning a royal contest.", "notes": "Adds unsupported fabricated details."},
     {"sample_id": "partial_1", "experiment_type": "partial_overlap", "expected_relation": "partial", "reference": "The report highlights strong growth in cloud revenue this quarter.", "candidate": "The report highlights growth in revenue."},
     {"sample_id": "partial_2", "experiment_type": "partial_overlap", "expected_relation": "partial", "reference": "The model reduced latency by forty percent in production.", "candidate": "The model reduced latency."},
     {"sample_id": "partial_3", "experiment_type": "partial_overlap", "expected_relation": "partial", "reference": "Our roadmap includes security upgrades and audit automation.", "candidate": "The roadmap includes security upgrades."},
@@ -158,6 +162,7 @@ def compute_rows(samples: list[dict[str, str]]) -> list[dict[str, str | float]]:
                 f"bleu={bleu:.6f}",
                 f"meteor={meteor:.6f}",
                 f"bertscore_f1={f1:.6f}",
+                f"notes={sample.get('notes', '')}",
             ])
         )
 
@@ -167,6 +172,7 @@ def compute_rows(samples: list[dict[str, str]]) -> list[dict[str, str | float]]:
             "expected_relation": sample["expected_relation"],
             "reference": sample["reference"],
             "candidate": sample["candidate"],
+            "notes": sample.get("notes", ""),
             "bleu": bleu,
             "rouge1_f": rouge1_f,
             "rougeL_f": rouge_l_f,
@@ -216,7 +222,7 @@ def print_group_summary(rows: list[dict[str, str | float]]) -> None:
 def save_csv(rows: list[dict[str, str | float]], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
-        "sample_id", "experiment_type", "expected_relation", "reference", "candidate",
+        "sample_id", "experiment_type", "expected_relation", "reference", "candidate", "notes",
         "bleu", "rouge1_f", "rougeL_f", "meteor",
         "bertscore_precision", "bertscore_recall", "bertscore_f1",
     ]
