@@ -1,0 +1,6 @@
+sample_id,source_dataset,source_split,task_type,difficulty_tag,context,question,reference_answer,source_record_id
+squad_train_0001,SQuAD,train,qa_span,easy,"Architecturally, the school has a Catholic character. Atop the Main Building's gold dome is a golden statue of the Virgin Mary.",To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?,Saint Bernadette Soubirous,5733be284776f41900661182
+squad_train_0002,SQuAD,train,qa_span,easy,The Grotto of Our Lady of Lourdes is one of the most recognizable landmarks on the campus of the University of Notre Dame.,What is in front of the Notre Dame Main Building?,a copper statue of Christ,5733be284776f4190066117f
+squad_train_0003,SQuAD,train,qa_span,easy,"Beyoncé Giselle Knowles-Carter is an American singer, songwriter, record producer and actress.",What is the full name of Beyoncé?,Beyoncé Giselle Knowles-Carter,56be4db0acb8001400a502ec
+squad_train_0004,SQuAD,train,qa_span,medium,Frédéric François Chopin was a Polish composer and virtuoso pianist of the Romantic era.,What era did Chopin's music come from?,Romantic era,56be85543aeaaa14008c9063
+squad_train_0005,SQuAD,train,qa_span,medium,"Solar power is the conversion of energy from sunlight into electricity, either directly using photovoltaics.",What does solar power convert into electricity?,energy from sunlight,56bf6b0f3aeaaa14008c9601

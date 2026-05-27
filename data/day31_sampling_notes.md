@@ -1,64 +1,60 @@
-# Day31 Sampling Notes（初稿）
+# Day31 Sampling Notes（SQuAD 小样本抽取）
 
-## 1) 抽样原则
+## 1) 本次范围
 
-本轮只做“可执行规范”建设，遵循：
+- 仅处理 **SQuAD**。
+- 不处理 CoQA。
+- 不处理 GLUE。
+- 仅抽取少量样本（5 条），用于 Day31 schema 对齐与格式验证。
 
-1. **小规模优先**：先保证 schema 正确，再考虑样本数量。
-2. **语义保真**：尽量保持原数据集任务语义，不人为改写任务本质。
-3. **可追踪性**：每条样本可回溯到来源数据集、split、原记录。
-4. **可复用性**：输出结构可直接进入后续标注、开发、检查流程。
-5. **低耦合**：不引入复杂 pipeline，不绑定评测脚本实现细节。
+## 2) 抽样方式
 
----
+- 来源：`data/day30_raw/squad/squad_raw_samples.json`。
+- 方式：只读取前 N 条（N=5），不做全量遍历。
+- 原则：保持原始问答语义，不改写 context/question/reference answer。
 
-## 2) Schema 设计理由
+## 3) 统一 Schema 映射
 
-统一 schema 的核心目标是让 SQuAD / CoQA / GLUE 等异构任务可以进入同一处理链路。
+每条样本均包含以下核心字段：
 
-设计取舍如下：
+- `sample_id`
+- `source_dataset`
+- `input`
+- `reference`
+- `task_type`
+- `difficulty_tag`
 
-- 以 `input` + `reference` 作为主干，兼容问答与分类两类监督信号；
-- 用 `task_type` 显式表达任务语义，避免依赖数据集名做隐式判断；
-- 用 `difficulty_tag` 支持后续误差分析（难度、歧义、多跳）；
-- 增加 `meta.source_record_id` 保证问题可回溯、可审计；
-- `input.history` 统一承载多轮上下文，避免为对话任务单独造 schema 分支。
+并补充：
 
-该设计的好处是：
+- `source_split`
+- `meta`（含 `source_record_id`）
 
-- 后续脚本可以在单一 schema 上实现读取、过滤、导出；
-- 标注规范可按 `task_type` 分层，而不是按数据集硬编码；
-- 新增数据集时只需做映射，不必重写目录和字段体系。
+SQuAD 映射规则：
 
----
+- `task_type` 固定为 `qa_span`。
+- `input.context` = 原始 `context`。
+- `input.question` = 原始 `question`。
+- `reference.answer_text` = 原始 `answers.text[0]`。
+- `difficulty_tag` 为工作标签（初版人工标注）：
+  - 前 3 条设为 `easy`（答案边界直接、定位清晰）；
+  - 后 2 条设为 `medium`（需要轻度语义定位）。
 
-## 3) annotation / dev / check 的用途
+## 4) 输出文件
 
-后续样本建议拆分三类：
+- 原始裁剪样本：`data/day31_samples/raw/squad_samples.json`
+- 统一格式（主输入）：`data/day31_samples/processed/squad_samples.jsonl`
+- 人工检查表：`data/day31_samples/processed/squad_samples.csv`
 
-### annotation
+## 5) 一致性说明（JSONL vs CSV）
 
-- 用途：人工标注、规范演练、边界案例讨论；
-- 特征：代表性强，包含少量歧义或复杂样本；
-- 目标：验证“人能否一致理解任务与字段定义”。
+两者保持一一对应（5 条）：
 
-### dev
+- `sample_id` 一致；
+- `context/question/reference answer` 一致；
+- `task_type` 一致（`qa_span`）；
+- `difficulty_tag` 在 JSONL 为数组，在 CSV 中用 `|` 拼接字符串表示。
 
-- 用途：开发期调试（字段映射、读写、校验）；
-- 特征：结构标准、字段完整、容易验证预期；
-- 目标：快速发现 schema 解析或转换错误。
+## 6) 后续建议
 
-### check
-
-- 用途：流程检查、回归验证、最小健康集；
-- 特征：规模小但覆盖关键任务类型；
-- 目标：在每次流程改动后快速确认“核心链路未破坏”。
-
----
-
-## 4) 本轮边界（Day31）
-
-- 不做大规模样本抽取；
-- 不实现评测脚本；
-- 不改动既有 iteration 与 practice plan；
-- 先沉淀统一 schema 与目录规范，作为 Day32+ 的输入前提。
+- Day32 可在当前映射模板下扩展 CoQA 与 GLUE。
+- 扩展时保持 `task_type` 与 `reference` 语义优先，不做“字段硬压平”。
