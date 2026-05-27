@@ -1,0 +1,21 @@
+[
+  {
+    "id": "coqa-dev-0001",
+    "source": "mctest",
+    "story": "The boy went to the park with his dog. He threw a red ball, and the dog ran after it. After a while, they sat under a tree because it started to rain.",
+    "questions": [
+      {"turn_id": 1, "input_text": "Where did the boy go?"},
+      {"turn_id": 2, "input_text": "Who went with him?"},
+      {"turn_id": 3, "input_text": "What color was the ball?"},
+      {"turn_id": 4, "input_text": "Why did they sit under a tree?"},
+      {"turn_id": 5, "input_text": "Who ran after the ball?"}
+    ],
+    "answers": [
+      {"turn_id": 1, "input_text": "to the park"},
+      {"turn_id": 2, "input_text": "his dog"},
+      {"turn_id": 3, "input_text": "red"},
+      {"turn_id": 4, "input_text": "because it started to rain"},
+      {"turn_id": 5, "input_text": "the dog"}
+    ]
+  }
+]
