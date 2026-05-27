@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.metrics import cohen_kappa_score
 
 MAX_ROWS = 50
+REPORT_PATH = Path("reports/day36_kappa_report.csv")
 
 
 def parse_args() -> argparse.Namespace:
@@ -57,15 +58,20 @@ def _from_disagreement_report(df: pd.DataFrame) -> tuple[list[str], list[str], p
     if label_split.shape[1] != 2:
         raise ValueError("label_pair 格式不正确，预期为 labelA|labelB")
 
+    task_type_col = (
+        df["task_type"].astype(str).str.strip() if "task_type" in df.columns else "unknown"
+    )
     aligned = pd.DataFrame(
         {
             "sample_id": df["sample_id"],
+            "task_type": task_type_col,
             "label_A": label_split[0].astype(str).str.strip(),
             "label_B": label_split[1].astype(str).str.strip(),
         }
     )
     aligned = aligned[(aligned["label_A"] != "") & (aligned["label_B"] != "")]
     aligned = aligned[(aligned["label_A"] != "MISSING") & (aligned["label_B"] != "MISSING")]
+    aligned["task_type"] = aligned["task_type"].replace("", "unknown")
 
     if aligned.empty:
         raise ValueError("无可用对齐样本（标签为空或 MISSING）")
@@ -93,8 +99,12 @@ def _from_annotation_table(df: pd.DataFrame) -> tuple[list[str], list[str], pd.D
         raise ValueError("至少需要两个 annotator")
 
     a_name, b_name = annotators[:2]
+    base_cols = ["sample_id", "label"]
+    if "task_type" in clean.columns:
+        base_cols.append("task_type")
+
     a_df = (
-        clean[clean["annotator"].astype(str) == a_name][["sample_id", "label"]]
+        clean[clean["annotator"].astype(str) == a_name][base_cols]
         .drop_duplicates(subset=["sample_id"], keep="first")
         .rename(columns={"label": "label_A"})
     )
@@ -106,6 +116,9 @@ def _from_annotation_table(df: pd.DataFrame) -> tuple[list[str], list[str], pd.D
 
     aligned = a_df.merge(b_df, how="inner", on="sample_id")
     aligned = aligned[(aligned["label_A"] != "") & (aligned["label_B"] != "")]
+    if "task_type" not in aligned.columns:
+        aligned["task_type"] = "unknown"
+    aligned["task_type"] = aligned["task_type"].astype(str).str.strip().replace("", "unknown")
 
     if aligned.empty:
         raise ValueError("按 sample_id 对齐后无有效样本")
@@ -129,6 +142,28 @@ def load_and_align(path: Path, max_rows: int) -> tuple[list[str], list[str], pd.
     return _from_annotation_table(df)
 
 
+def build_task_level_report(aligned: pd.DataFrame) -> pd.DataFrame:
+    def _per_group_metrics(group: pd.DataFrame) -> pd.Series:
+        sample_count = len(group)
+        raw_agreement = (group["label_A"] == group["label_B"]).mean()
+        kappa = cohen_kappa_score(group["label_A"], group["label_B"])
+        return pd.Series(
+            {
+                "kappa": kappa,
+                "raw_agreement": raw_agreement,
+                "sample_count": sample_count,
+            }
+        )
+
+    report = (
+        aligned.groupby("task_type", dropna=False)
+        .apply(_per_group_metrics)
+        .reset_index()
+        .sort_values(by="task_type")
+    )
+    return report[["task_type", "kappa", "raw_agreement", "sample_count"]]
+
+
 def main() -> None:
     args = parse_args()
     labels_a, labels_b, aligned = load_and_align(args.input, args.max_rows)
@@ -138,10 +173,16 @@ def main() -> None:
     raw_agreement = agreement_count / sample_count
     overall_kappa = cohen_kappa_score(labels_a, labels_b)
 
+    report_df = build_task_level_report(aligned)
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    report_df.to_csv(REPORT_PATH, index=False)
+
     print(f"input_file: {args.input}")
     print(f"sample_count: {sample_count}")
     print(f"raw_agreement: {raw_agreement:.4f}")
     print(f"overall_kappa: {overall_kappa:.4f}")
+    print(f"task_level_report: {REPORT_PATH}")
+    print(report_df.to_string(index=False))
 
 
 if __name__ == "__main__":
