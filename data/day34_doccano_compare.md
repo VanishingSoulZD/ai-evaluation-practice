@@ -128,3 +128,95 @@
 - 能导出 JSONL。
 - 导出结果中 `sample_id` 未丢失。
 - 导出结果可进入 pandas 后处理（可按 `sample_id` join 源样本）。
+
+## 9. doccano MVP Export Schema
+
+### 9.1 设计目标
+
+- 目标是产出“分析友好”的导出结构，直接服务后续 `metrics / pandas / judge` 链路。
+- 不直接暴露 doccano UI 原生结构（通常偏平台内部表示），避免把下游脚本绑定到界面层嵌套字段。
+- 优先 JSONL，因为一行一条样本记录，便于流式处理、版本比对和 pandas 直接读取。
+- MVP 范围只定义最小可消费字段，不引入 ETL、API 或复杂 pipeline。
+
+### 9.2 推荐 JSONL Schema
+
+```json
+{
+  "sample_id": "squad_train_0001",
+  "task_type": "qa_span",
+  "text": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",
+  "label": "UNSUPPORTED",
+  "label_raw": ["UNSUPPORTED"],
+  "label_schema_version": "v1",
+  "annotator": "1",
+  "annotation_id": "5001",
+  "project": "doccano_mvp",
+  "meta": {
+    "source_dataset": "squad",
+    "split": "dev"
+  }
+}
+```
+
+最小解析约定：
+- 每行一个完整 JSON 对象（UTF-8，无 BOM）。
+- 顶层字段优先扁平化；`meta` 仅保留轻量补充信息。
+- `label` 作为主消费列；`label_raw` 用于无损保留原始标签形态。
+
+### 9.3 必须保留字段
+
+| field | required | reason |
+| ----- | -------- | ------ |
+| `sample_id` | yes | 跨平台唯一追踪键，用于回写 Day31 样本与 join 分析结果。 |
+| `task_type` | yes | 决定评测路由与指标分桶，避免任务混算。 |
+| `label` | yes | 下游统计/一致性分析的主消费标签列。 |
+| `text` | yes | 最小可复核输入文本，保证分析可追溯。 |
+| `annotation_id` | yes | 区分同 `sample_id` 的多次/多人标注记录。 |
+| `annotator` | yes | 支持人间一致性与冲突归因分析。 |
+
+### 9.4 sample_id 保留策略
+
+- 优先保留 Day31 原值（例如 `squad_train_0001`）。
+- 不重写 ID，不引入新编码规则。
+- 若导出时 `sample_id` 位于 metadata，必须提升回顶层 `sample_id` 字段。
+- fallback reconstruct 策略（仅在缺失时）：
+  1. 尝试使用导入阶段保留的外部映射键恢复；
+  2. 若仍缺失，使用 `source_dataset + local_row_index` 生成临时 ID；
+  3. 同时打标 `id_reconstructed=true`（可放在 `meta`），防止误判为原始主键。
+
+### 9.5 label 保存策略
+
+- `label`：规范化主标签（字符串），用于统计与过滤。
+- `label_raw`：原始标签表示（数组/原生结构），用于无损追溯。
+- `label_schema_version`：当前标签约定版本（MVP 固定 `v1`）。
+
+约束：
+- 空标签统一为 `null`。
+- 禁止混用 `""` 与 `[]` 表示空标签。
+- `qa_span` 标签命名遵循 Day32：`SUPPORTED` / `UNSUPPORTED` / `MULTI_ANSWER` / `AMBIGUOUS_SPAN`。
+
+### 9.6 pandas 兼容建议
+
+- 直接读取：`pd.read_json(path, lines=True)`。
+- 扁平字段优先：将核心分析列放顶层，降低 `json_normalize` 依赖。
+- `annotation_id` 建议字符串化，避免与其他数据源 merge 时出现 int/string 混型。
+- 导出 CSV 时，先将 `label_raw` 序列化为 JSON 字符串列，再写盘。
+
+### 9.7 与 Label Studio export 的区别
+
+| 对比项 | Label Studio | doccano MVP |
+| --- | ------------ | ----------- |
+| 嵌套层级 | 常见 `data/meta/annotations/result` 多层嵌套 | 顶层扁平字段优先，仅保留轻量 `meta` |
+| UI 结构暴露程度 | 更接近平台原生标注记录结构 | 主动屏蔽 UI 细节，面向分析消费 |
+| 分析友好性 | 需先抽取 `result` 才能聚合 | `label/sample_id/task_type` 可直接统计 |
+| 下游解析复杂度 | 解析路径长、字段分布分散 | 解析路径短、join 与分桶更直接 |
+
+### 9.8 风险与缓解
+
+| 风险 | 最小缓解动作 |
+| ---- | ------------ |
+| `task_type` 差异导致标签形态不一致 | 按 `task_type` 固定最小字段契约；MVP 仅保证通用字段 + `label/label_raw`。 |
+| 多标注者冲突（同 `sample_id` 多条记录） | 主键改为 `sample_id + annotation_id`，并保留 `annotator`。 |
+| 空标签处理不一致 | 统一空值为 `null`，导入/导出检查禁止 `""`、`[]` 作为空标签。 |
+| schema 漂移影响脚本稳定性 | 增加 `label_schema_version`，脚本按版本分支解析。 |
+| Day31 中历史空 `label` 被误当有效值 | 解析时先做空值标准化，再进入指标统计。 |
