@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import csv
 
+from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
 from rouge_score import rouge_scorer
 
 
@@ -51,11 +52,20 @@ def build_demo_samples() -> list[dict[str, str]]:
     return DEMO_SAMPLES
 
 
-def compute_rouge_scores(samples: list[dict[str, str]]) -> list[dict[str, str | float]]:
+def _simple_tokenize(text: str) -> list[str]:
+    return text.lower().split()
+
+
+def compute_scores(samples: list[dict[str, str]]) -> list[dict[str, str | float]]:
     scorer = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL"], use_stemmer=True)
+    smoothing = SmoothingFunction().method1
     rows: list[dict[str, str | float]] = []
 
     for sample in samples:
+        reference_tokens = _simple_tokenize(sample["reference"])
+        candidate_tokens = _simple_tokenize(sample["candidate"])
+        bleu = float(sentence_bleu([reference_tokens], candidate_tokens, smoothing_function=smoothing))
+
         scores = scorer.score(sample["reference"], sample["candidate"])
         rouge1 = float(scores["rouge1"].fmeasure)
         rouge2 = float(scores["rouge2"].fmeasure)
@@ -64,9 +74,10 @@ def compute_rouge_scores(samples: list[dict[str, str]]) -> list[dict[str, str | 
         print(
             "|".join(
                 [
+                    "INFO",
                     f"sample_id={sample['sample_id']}",
+                    f"bleu={bleu:.6f}",
                     f"rouge1={rouge1:.6f}",
-                    f"rouge2={rouge2:.6f}",
                     f"rougeL={rougel:.6f}",
                 ]
             )
@@ -76,6 +87,7 @@ def compute_rouge_scores(samples: list[dict[str, str]]) -> list[dict[str, str | 
             {
                 "sample_id": sample["sample_id"],
                 "experiment_type": sample["experiment_type"],
+                "bleu": bleu,
                 "rouge1": rouge1,
                 "rouge2": rouge2,
                 "rougeL": rougel,
@@ -92,6 +104,7 @@ def save_results(rows: list[dict[str, str | float]], output_path: Path) -> None:
     fieldnames = [
         "sample_id",
         "experiment_type",
+        "bleu",
         "rouge1",
         "rouge2",
         "rougeL",
@@ -107,7 +120,7 @@ def save_results(rows: list[dict[str, str | float]], output_path: Path) -> None:
 
 def main() -> None:
     samples = build_demo_samples()
-    rows = compute_rouge_scores(samples)
+    rows = compute_scores(samples)
 
     output_path = Path("outputs/day38_rouge_scores.csv")
     save_results(rows, output_path)
