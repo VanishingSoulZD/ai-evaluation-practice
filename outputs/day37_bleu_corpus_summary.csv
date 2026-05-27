@@ -1,0 +1,2 @@
+num_samples,mean_sentence_bleu,corpus_bleu,delta_corpus_minus_mean_sentence,tokenizer,bleu_impl
+8,0.33643,0.408913,0.072483,lower+split,nltk.translate.bleu_score

@@ -108,7 +108,32 @@ Interpretation:
 
 ---
 
-## 5. Conclusion
+## 5. Sentence-level vs Corpus-level BLEU
+
+- **Mean sentence BLEU**: computed by scoring each sentence independently and then taking the arithmetic mean.
+- **Corpus BLEU**: computed by aggregating n-gram counts across the whole dataset first, then applying BLEU once at corpus level.
+
+### 5.1 Why corpus BLEU is more stable
+
+- Aggregated counts reduce extreme fluctuations from short sentences.
+- Brevity penalty is applied from corpus-level length ratio, which is usually less noisy than sentence-by-sentence penalties.
+- For system-level evaluation, one corpus score better reflects overall generation behavior.
+
+### 5.2 Why corpus BLEU is not the mean of sentence BLEU
+
+- The aggregation order is different (**aggregate-then-score** vs **score-then-average**).
+- Brevity penalty acts differently at corpus scope than sentence scope.
+- Therefore, corpus BLEU is **not** an arithmetic mean of sentence BLEU values.
+
+### 5.3 This run's minimal comparison
+
+- Mean sentence BLEU: **0.336430**
+- Corpus BLEU: **0.408913**
+- Delta (corpus - mean sentence): **0.072483**
+
+---
+
+## 6. Conclusion
 
 BLEU is a foundational **overlap-based** metric that is useful for monitoring textual agreement with references.
 However, BLEU is not equivalent to true semantic quality.
