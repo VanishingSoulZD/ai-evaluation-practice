@@ -129,6 +129,24 @@ def _trend_label(meteor: float, bleu: float, rouge_l: float) -> str:
     return "meteor<=bleu,rougeL"
 
 
+def _case_observation(experiment_type: str, meteor: float, bleu: float, rouge_l: float) -> str:
+    if experiment_type == "synonym_match":
+        if meteor > bleu:
+            return "METEOR higher because synonym matching exists"
+        return "Synonym effect is weak here, METEOR does not clearly exceed BLEU"
+    if experiment_type == "stemming_effect":
+        if meteor >= bleu:
+            return "METEOR benefits from stem matching on morphology variants"
+        return "Stemming signal exists but BLEU stays competitive in this sample"
+    if experiment_type == "surface_mismatch":
+        if bleu < meteor:
+            if rouge_l >= bleu:
+                return "BLEU drops due to surface mismatch; ROUGE-L partially preserved due to sequence overlap"
+            return "BLEU drops due to surface mismatch with low exact n-gram overlap"
+        return "Surface mismatch hurts all metrics similarly in this sample"
+    return "No targeted comparison note for this case type"
+
+
 def compute_rows(samples: list[dict[str, str]]) -> list[dict[str, str | float]]:
     rouge = RougeScorer(["rougeL"], use_stemmer=True)
     smoothing = SmoothingFunction().method1
@@ -166,6 +184,18 @@ def compute_rows(samples: list[dict[str, str]]) -> list[dict[str, str | float]]:
                     f"rougeL={rouge_l:.6f}",
                     f"trend={trend}",
                     f"wordnet={wordnet_used}",
+                ]
+            )
+        )
+        observation = _case_observation(sample["experiment_type"], meteor, bleu, rouge_l)
+        print(
+            "|".join(
+                [
+                    "COMPARE",
+                    f"sample_id={sample['sample_id']}",
+                    f"case={sample['experiment_type']}",
+                    f"meteor_vs_bleu={(meteor - bleu):.6f}",
+                    f"observation={observation}",
                 ]
             )
         )
@@ -213,6 +243,22 @@ def print_summary(rows: list[dict[str, str | float]]) -> None:
                 ]
             )
         )
+
+    covered_cases = {"synonym_match", "stemming_effect", "surface_mismatch"}
+    scoped_rows = [row for row in rows if str(row["experiment_type"]) in covered_cases]
+    meteor_beats_bleu = sum(1 for row in scoped_rows if float(row["meteor"]) > float(row["bleu"]))
+    total_scoped = len(scoped_rows)
+    ratio = (meteor_beats_bleu / total_scoped) if total_scoped else 0.0
+    print(
+        "|".join(
+            [
+                "SUMMARY",
+                f"meteor_more_flexible_than_bleu={meteor_beats_bleu}/{total_scoped}",
+                f"ratio={ratio:.6f}",
+                "scope=synonym_match,stemming_effect,surface_mismatch",
+            ]
+        )
+    )
 
 
 def save_csv(rows: list[dict[str, str | float]], output_path: Path) -> None:
