@@ -1,0 +1,6 @@
+sample_id,experiment_type,meteor,bleu,rougeL,reference,candidate
+exact_1,exact_match,0.9985422740524781,1.0,1.0,The cat sits on the warm mat,The cat sits on the warm mat
+syn_1,synonym_paraphrase,0.5260416666666666,0.10266900960803409,0.6666666666666666,The boy is very happy today,The child is very joyful today
+morph_1,stemming_morphology,0.9985422740524781,0.488923022434901,1.0,The runner runs quickly in the park,The runner running quickly in the park
+verbose_1,redundancy_verbose_output,0.8586206896551724,0.2891784933232572,0.5555555555555556,The project passed all tests,The project passed all tests with extra repeated details and many unnecessary words
+syn_2,synonym_paraphrase,0.16666666666666666,0.048549177170732344,0.3333333333333333,He solved the difficult problem fast,He fixed the hard issue quickly
