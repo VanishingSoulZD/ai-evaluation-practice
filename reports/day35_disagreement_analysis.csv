@@ -1,0 +1,5 @@
+sample_id,annotator_A,annotator_B,disagreement,label_pair
+squad_001,A,B,false,supported|supported
+squad_002,A,B,true,unsupported|supported
+squad_003,A,,true,supported|MISSING
+squad_004,,B,true,MISSING|unsupported
