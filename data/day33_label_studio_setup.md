@@ -73,7 +73,92 @@ uv run label-studio start --port 8080
 
 ---
 
-## 6. 如何停止服务
+## 6. 数据导入说明（MVP）
+
+### 6.1 推荐导入格式（JSONL vs CSV）
+
+**结论：本轮推荐优先用 JSONL 导入。**
+
+- JSONL 更适合保留结构化字段（如 `history` 的 JSON 数组字符串），字段语义更直观；
+- CSV 也可导入，但在引号、逗号、换行和 JSON 字符串转义上更容易踩坑；
+- 本轮只做 MVP，不做复杂 schema 转换，因此直接使用 `data/day31_samples.jsonl` 最稳妥。
+
+可选场景：如果你只做快速浏览或与表格工具联动，CSV 仍可作为备选。
+
+### 6.2 day31 样本字段说明
+
+基于 `day31` 样本前几条记录，当前 schema 包含以下字段：
+
+- `sample_id`：样本唯一 ID（建议在导出后用于回溯）；
+- `source_dataset`：来源数据集（如 `squad`、`coqa`）；
+- `subtask`：子任务标识（当前示例中可为空字符串）；
+- `task_type`：任务类型（如 `qa_span`、`qa_dialogue`）；
+- `difficulty_tag`：难度标签（如 `easy`、`medium`）；
+- `input`：主输入文本（通常可作为标注时的主要阅读字段）；
+- `context`：上下文文本；
+- `question`：问题文本；
+- `history`：多轮历史（字符串形式，内容通常是 JSON 数组）；
+- `reference`：参考答案（用于质检或比对，不一定直接参与盲标）；
+- `label`：预留标签字段（当前样本多数为空）；
+- `split`：数据划分（如 `dev`、`check`、`annotation`）。
+
+### 6.3 Label Studio 中的字段映射
+
+建议采用“文本阅读 + 结果标签”最小配置，映射如下：
+
+- 主展示区：
+  - `input`（必显，给标注员快速理解任务）；
+  - `context`（建议显示）；
+  - `question`（问答类任务建议显示）；
+- 辅助信息区：
+  - `history`（多轮任务显示；单轮任务可留空展示）；
+  - `reference`（如做盲标可先不显示给标注员）；
+- 元信息（不需要单独做控件，但应保留在任务数据中）：
+  - `sample_id`, `source_dataset`, `task_type`, `difficulty_tag`, `split`, `subtask`。
+
+MVP 原则：先保证“能看到输入并完成标注”，不在本轮引入复杂动态模板或 schema 重写。
+
+### 6.4 导入流程
+
+1. 在 Label Studio 创建文本项目（例如：`iter033-day31-mvp`）。
+2. 打开 **Import** 页面。
+3. 选择 `data/day31_samples.jsonl`（推荐）上传。
+4. 若使用 CSV，则选择 `data/day31_samples.csv`，并确认首行为表头。
+5. 导入后先抽查前 5~10 条任务，确认字段显示正常。
+6. 再进入标注页面开始人工标注。
+
+### 6.5 导入后的检查项
+
+至少检查以下 6 项：
+
+1. **任务数是否正确**：导入总数与源文件行数预期一致；
+2. **字段是否齐全**：`input/context/question/history/reference` 至少能在数据中取到；
+3. **中文与特殊字符**：无乱码、无截断；
+4. **`history` 可读性**：多轮样本的历史字段不是损坏字符串；
+5. **空字段可接受**：如 `subtask`、`label` 为空时不影响加载；
+6. **样本可回溯**：任务中能定位 `sample_id`。
+
+### 6.6 常见导入错误
+
+1. **JSON 解析失败 / JSONL 非逐行 JSON**  
+   - 原因：文件不是一行一个 JSON 对象，或存在非法逗号/引号。  
+   - 处理：确保 `.jsonl` 每行是完整 JSON。
+
+2. **CSV 列错位**  
+   - 原因：文本内逗号、引号未正确转义。  
+   - 处理：优先改用 JSONL；若坚持 CSV，先用工具重新导出规范 CSV。
+
+3. **字段名不匹配**  
+   - 原因：配置中引用了不存在字段（例如写成 `contexts` 而不是 `context`）。  
+   - 处理：按 day31 实际字段名逐一核对。
+
+4. **导入后看不到关键信息**  
+   - 原因：标注界面未绑定对应字段（例如没显示 `question`）。  
+   - 处理：回到 Labeling Interface 增加对应文本展示控件并重新保存。
+
+---
+
+## 7. 如何停止服务
 
 在运行 `uv run label-studio start` 的终端窗口中：
 
@@ -83,7 +168,7 @@ uv run label-studio start --port 8080
 
 ---
 
-## 7. 常见启动问题（至少 2 个）
+## 8. 常见启动问题（至少 2 个）
 
 ### 问题 1：`uv: command not found`
 
@@ -115,7 +200,7 @@ uv run label-studio start --port 8081
 
 ---
 
-## 8. 最小可复制命令清单
+## 9. 最小可复制命令清单
 
 ```bash
 cd /workspace/ai-evaluation-practice
@@ -124,4 +209,3 @@ uv pip install label-studio
 uv run label-studio --version
 uv run label-studio start
 ```
-
