@@ -1,255 +1,277 @@
-# Day 41 — Minimal Pairwise Judge + Bias Demo (Teaching Version)
+# Day 41 — 最简成对评判 + 偏差演示（教学版）
 
-## 1) Purpose & Scope
+## 1) 目的与范围
 
-This document is a **teaching demo**, not a production evaluation system.
+本文档是一个**教学演示**，而非生产级评测系统。
 
-It is designed so a reader can run one full experiment with only paper (or a simple note app) in **30–45 minutes**.
+设计目标是让读者仅用纸笔（或简单记事应用）就能在 **30–45 分钟** 内完成一次完整实验。
 
-Scope:
-- No real LLM Judge API.
-- No automated pipeline.
-- No statistical significance claim.
-- Manual judging only.
+范围：
 
-Goal:
-- Understand why **pairwise evaluation** is often more stable than **absolute scoring** for comparison tasks.
-- Observe how judge bias can affect outcomes.
+- 没有真实的 LLM Judge API。
+- 没有自动化评测流水线。
+- 不做统计显著性声明。
+- 仅手动评判。
 
----
+目标：
 
-## 2) Core Concepts (Engineering View)
-
-### Absolute scoring
-You score each answer independently (for example 1–5).
-
-Pros:
-- Simple and familiar.
-
-Common issue:
-- Score scale drifts across time/cases (today’s 4/5 may become tomorrow’s 3/5).
-
-### Pairwise evaluation
-You compare two answers for the same prompt and choose:
-- **A wins**, **B wins**, or **Tie**.
-
-Pros:
-- Forces direct comparison.
-- Easier to aggregate for ranking/preferences.
-- Usually less sensitive to score calibration drift.
-
-### Judge bias
-A systematic preference not fully explained by true quality.
-
-This demo focuses on:
-- **Position bias**: preferring first/left answer.
-- **Verbosity bias**: preferring longer answer even when substance is similar.
-- **Style bias**: preferring polished “AI-looking” style over actual quality.
+- 理解为什么**成对评测（pairwise evaluation）**在比较任务中通常比**绝对打分（absolute scoring）**更稳定。
+- 观察评判偏差（judge bias）如何影响结果。
 
 ---
 
-## 3) Experiment Protocol
+## 2) 核心概念（工程视角）
 
-### Setup rules
-1. **Blind review**: hide source labels (no model names).
-2. Judge each case with **A / B / Tie**.
-3. Record confidence (Low/Med/High) and short reason.
-4. For control cases, evaluate both **AB** and **BA** (same content, swapped order).
+### 绝对打分（Absolute scoring）
 
-### Why this helps
-- Pairwise reduces dependency on unstable personal score scales.
-- AB/BA swap helps detect position effects.
-- Bias check fields force explicit reflection on noisy preferences.
+为每个答案独立打分（例如 1–5 分）。
 
-### Suggested run order
-- Warm-up: 2 clear-quality cases.
-- Main: 2 close-quality + 2 verbosity-bias + 2 style-bias.
-- Controls: include at least 2 AB/BA swap cases.
+优点：
 
----
+- 简单，易理解。
 
-## 4) Case Collection (8 Pairwise Cases)
+常见问题：
 
-> Each case is intentionally short for manual reading. Keep judgment focused on usefulness and correctness for the prompt.
+- 分值尺度随时间/案例漂移（今天的 4/5，明天可能变成 3/5）。
 
-### Case C1 (Clear-quality)
-**Task prompt:** Give 3 practical ways to reduce API latency in a web service.
+### 成对评测（Pairwise evaluation）
 
-**Answer A:**
-1) Add response caching for repeated reads.
-2) Use connection pooling to reduce handshake overhead.
-3) Add pagination/compression so each response sends less data.
+比较同一提示的两个答案，选择：
 
-**Answer B:**
-Use a faster language and better servers.
+- **A 胜**、**B 胜** 或 **平手（Tie）**。
 
-**Expected observation:** A should win clearly due to specific actionable methods.
+优点：
 
----
+- 强制直接比较。
+- 更容易汇总用于排序或偏好分析。
+- 通常对分值漂移不敏感。
 
-### Case C2 (Clear-quality)
-**Task prompt:** Explain overfitting to a beginner in 2 sentences.
+### 评判偏差（Judge bias）
 
-**Answer A:**
-Overfitting is when a model memorizes training data patterns that do not generalize. It scores high on training examples but performs worse on unseen data.
+一种系统性偏好，不完全由真实质量解释。
 
-**Answer B:**
-Overfitting is when AI is too smart and learns everything perfectly.
+本演示关注：
 
-**Expected observation:** A should win clearly; B is misleading.
+- **位置偏差**：偏好第一个/左边的答案。
+- **冗长偏差**：即便内容类似，也偏好更长的答案。
+- **风格偏差**：偏好“看起来像 AI 写的”精致风格，而非实际质量。
 
 ---
 
-### Case C3 (Close-quality)
-**Task prompt:** Give a short SQL tip to avoid accidental full-table updates.
+## 3) 实验协议
 
-**Answer A:**
-Use transactions and always run `SELECT` with the same `WHERE` before `UPDATE`.
+### 设置规则
 
-**Answer B:**
-Enable safe update mode and require a `WHERE` clause or key condition for updates.
+1. **盲评**：隐藏来源标签（不显示模型名称）。
+2. 对每个案例使用 **A / B / Tie** 进行评判。
+3. 记录信心等级（低/中/高）和简短理由。
+4. 对控制案例，同时评估 **AB** 和 **BA**（相同内容，顺序交换）。
 
-**Expected observation:** Close comparison. Pairwise forces preference despite both being useful.
+### 原理说明
 
----
+- 成对评测减少对不稳定个人评分尺度的依赖。
+- AB/BA 顺序交换帮助检测位置效应。
+- 偏差检查字段迫使评判者显式反思潜在偏好。
 
-### Case C4 (Close-quality)
-**Task prompt:** Suggest one way to make daily standups more efficient.
+### 建议执行顺序
 
-**Answer A:**
-Set a strict 15-minute timebox and move deep technical discussions to follow-up threads.
-
-**Answer B:**
-Use a fixed speaking order and ask each person to report blockers first, then async details later.
-
-**Expected observation:** Likely close or tie. Good for showing absolute-score drift risk.
+- 热身：2 个质量明显的案例。
+- 正式案例：2 个接近质量 + 2 个冗长偏差 + 2 个风格偏差。
+- 控制案例：至少包含 2 个 AB/BA 顺序交换案例。
 
 ---
 
-### Case C5 (Verbosity-bias)
-**Task prompt:** What is the difference between HTTP 401 and 403?
+## 4) 案例收集（8 个成对案例）
 
-**Answer A:**
-401 means unauthenticated (login needed/invalid). 403 means authenticated but not allowed.
+> 每个案例刻意简短，便于手动阅读。评判重点为提示的实用性和正确性。
 
-**Answer B:**
-From an access-control perspective in web architecture, status code 401 generally communicates that identity verification is absent or failed at authentication time, whereas 403 indicates identity may be known but authorization policy denies access to the requested resource.
+### 案例 C1（清晰质量）
 
-**Expected observation:** Same core content; check if judge over-rewards length.
+**任务提示：** 给出 3 种减少 Web 服务 API 延迟的实用方法。
 
----
+**答案 A：**
 
-### Case C6 (Verbosity-bias)
-**Task prompt:** Give one reason to use feature flags.
+1. 为重复请求增加响应缓存。
+2. 使用连接池以减少握手开销。
+3. 添加分页/压缩，使每次响应的数据量更小。
 
-**Answer A:**
-Feature flags let teams release safely by enabling new behavior for a small user segment first.
+**答案 B：**
+使用更快的编程语言和更好的服务器。
 
-**Answer B:**
-Feature flags are an operationally flexible mechanism that decouples deployment from release and allows progressive exposure, staged rollout, and controlled risk management under real production traffic.
-
-**Expected observation:** Similar meaning; watch verbosity preference.
+**预期观察：** A 明显优于 B，因为有具体可操作的方法。
 
 ---
 
-### Case C7 (Style-bias)
-**Task prompt:** How can a student recover after failing one exam?
+### 案例 C2（清晰质量）
 
-**Answer A:**
-Review mistakes, ask the teacher for feedback, and make a weekly study plan with smaller goals.
+**任务提示：** 用两句话向初学者解释过拟合。
 
-**Answer B:**
-✨ Reset and rebuild: audit your error patterns, create a focused recovery roadmap, and execute micro-goals each week with accountability check-ins.
+**答案 A：**
+过拟合是指模型记住训练数据中的模式，但无法泛化到新数据。在训练样本上表现很好，但在未见数据上表现较差。
 
-**Expected observation:** Content overlap is high; check if polished style wins by default.
+**答案 B：**
+过拟合是 AI 太聪明，学习得完美无缺。
 
----
-
-### Case C8 (Style-bias + Order-swap control)
-**Task prompt:** Give one tip for writing clearer commit messages.
-
-**Answer A (AB pass):**
-Start with an imperative verb and mention what changed plus why.
-
-**Answer B (AB pass):**
-Use a crisp, intent-first message: lead with an action verb, then add the implementation delta and rationale for future readers.
-
-**Answer A (BA pass):**
-Use a crisp, intent-first message: lead with an action verb, then add the implementation delta and rationale for future readers.
-
-**Answer B (BA pass):**
-Start with an imperative verb and mention what changed plus why.
-
-**Expected observation:** Check both style preference and whether winner flips only due to order.
+**预期观察：** A 明显优于 B；B 具有误导性。
 
 ---
 
-## 5) Judge Record Template (Human Simulation)
+### 案例 C3（接近质量）
+
+**任务提示：** 给出一个简短 SQL 提示，避免意外更新整张表。
+
+**答案 A：**
+使用事务，并在 `UPDATE` 前总是用相同的 `WHERE` 执行 `SELECT`。
+
+**答案 B：**
+启用安全更新模式，更新必须有 `WHERE` 子句或关键条件。
+
+**预期观察：** 接近比较。成对评测可迫使偏好选择，尽管两者都有用。
+
+---
+
+### 案例 C4（接近质量）
+
+**任务提示：** 提出一种提高每日站会效率的方法。
+
+**答案 A：**
+严格限定 15 分钟，并将深入技术讨论移到后续讨论线程。
+
+**答案 B：**
+使用固定发言顺序，每人先汇报阻塞点，再异步提交细节。
+
+**预期观察：** 可能接近或平手。适合展示绝对分漂移风险。
+
+---
+
+### 案例 C5（冗长偏差）
+
+**任务提示：** HTTP 401 和 403 的区别是什么？
+
+**答案 A：**
+401 表示未认证（需登录/无效）。403 表示已认证但无权限。
+
+**答案 B：**
+从 Web 架构的访问控制角度看，状态码 401 通常表示身份验证缺失或失败，而 403 表示身份可能已知，但授权策略拒绝访问请求资源。
+
+**预期观察：** 核心内容相同；检查评判者是否因长度而偏好 B。
+
+---
+
+### 案例 C6（冗长偏差）
+
+**任务提示：** 给出使用功能开关（feature flags）的一个理由。
+
+**答案 A：**
+功能开关允许团队先对小部分用户启用新功能，从而安全发布。
+
+**答案 B：**
+功能开关是一种操作灵活的机制，将部署与发布解耦，支持渐进式曝光、分阶段发布，并在真实流量下进行风险可控管理。
+
+**预期观察：** 含义相似；观察冗长偏好。
+
+---
+
+### 案例 C7（风格偏差）
+
+**任务提示：** 学生一次考试没通过后如何恢复？
+
+**答案 A：**
+复盘错误，请教师反馈，制定每周学习计划并设立小目标。
+
+**答案 B：**
+✨ 重置与重建：审查错误模式，创建针对性的恢复路线图，每周执行微目标并进行责任检查。
+
+**预期观察：** 内容高度重叠；检查精致风格是否默认获胜。
+
+---
+
+### 案例 C8（风格偏差 + 顺序交换控制）
+
+**任务提示：** 给出一个写更清晰提交信息的技巧。
+
+**答案 A（AB 顺序）：**
+用祈使动词开头，并说明改动内容及原因。
+
+**答案 B（AB 顺序）：**
+使用简洁、意图优先的信息：以动作动词开头，然后说明实现变化及未来阅读者的理由。
+
+**答案 A（BA 顺序）：**
+使用简洁、意图优先的信息：以动作动词开头，然后说明实现变化及未来阅读者的理由。
+
+**答案 B（BA 顺序）：**
+用祈使动词开头，并说明改动内容及原因。
+
+**预期观察：** 检查风格偏好，以及获胜者是否仅因顺序而变化。
+
+---
+
+## 5) 评判记录模板（人工模拟）
 
 ```md
-### Judge Record
-- Judge ID:
-- Case ID:
+### 评判记录
 
-- Pass 1 Order: [A|B]
-- Winner: [A|B|Tie]
-- Confidence: [Low|Med|High]
-- Reason (1-2 lines):
+- 评判者 ID：
+- 案例 ID：
 
-- Pass 2 Order (swap): [B|A] (optional unless control case)
-- Winner: [A|B|Tie]
-- Confidence: [Low|Med|High]
-- Reason (1-2 lines):
+- 第 1 次顺序： [A|B]
+- 胜者： [A|B|平手]
+- 信心： [低|中|高]
+- 理由（1-2 行）：
 
-- Bias check:
-  - Position bias suspected? [Yes|No]
-  - Verbosity bias suspected? [Yes|No]
-  - Style bias suspected? [Yes|No]
+- 第 2 次顺序（交换）： [B|A]（控制案例可选）
+- 胜者： [A|B|平手]
+- 信心： [低|中|高]
+- 理由（1-2 行）：
+
+- 偏差检查：
+  - 是否存在位置偏差？ [是|否]
+  - 是否存在冗长偏差？ [是|否]
+  - 是否存在风格偏差？ [是|否]
 ```
 
 ---
 
-## 6) Result Summary Section
+## 6) 结果汇总
 
-### 6.1 Pairwise Result Table
+### 6.1 成对结果表
 
-| Case | Type | Order | Winner | Tie | Notes |
-|---|---|---|---|---|---|
-| C1 | clear-quality | AB |  |  |  |
-| C2 | clear-quality | AB |  |  |  |
-| C3 | close-quality | AB |  |  |  |
-| C4 | close-quality | AB |  |  |  |
-| C5 | verbosity-bias | AB |  |  |  |
-| C6 | verbosity-bias | AB |  |  |  |
-| C7 | style-bias | AB |  |  |  |
-| C8 | style-bias + swap control | AB + BA |  |  |  |
+| 案例 | 类型                | 顺序    | 胜者 | 平手 | 备注 |
+| ---- | ------------------- | ------- | ---- | ---- | ---- |
+| C1   | 清晰质量            | AB      |      |      |      |
+| C2   | 清晰质量            | AB      |      |      |      |
+| C3   | 接近质量            | AB      |      |      |      |
+| C4   | 接近质量            | AB      |      |      |      |
+| C5   | 冗长偏差            | AB      |      |      |      |
+| C6   | 冗长偏差            | AB      |      |      |      |
+| C7   | 风格偏差            | AB      |      |      |      |
+| C8   | 风格偏差 + 顺序控制 | AB + BA |      |      |      |
 
-### 6.2 Bias Summary Table
+### 6.2 偏差汇总表
 
-| Bias type | Signal definition | Observed count | Comment |
-|---|---|---|---|
-| Position bias | Winner changes when only order changes (AB vs BA) |  /  |  |
-| Verbosity bias | Longer answer wins without clear extra substance |  /  |  |
-| Style bias | Polished tone wins over similar content quality |  /  |  |
-
----
-
-## 7) Key Takeaways
-
-1. Pairwise is often better for **comparison** tasks because it avoids unstable absolute score calibration.
-2. Absolute scores are still useful, but they can drift and hide fine preference differences.
-3. Judges (human or LLM) may over-prefer longer answers even when added value is small.
-4. Judges may be affected by answer position (first/left bias), so AB/BA controls are important.
-5. Judges may reward “AI-like polished style” more than true usefulness.
-6. LLM-as-a-Judge can inherit these same biases, so protocol design matters as much as model choice.
+| 偏差类型 | 信号定义                         | 观察次数 | 备注 |
+| -------- | -------------------------------- | -------- | ---- |
+| 位置偏差 | 仅顺序变化就改变胜者（AB vs BA） | /        |      |
+| 冗长偏差 | 更长答案获胜，但无明显额外内容   | /        |      |
+| 风格偏差 | 精致风格胜过内容相似的答案       | /        |      |
 
 ---
 
-## 8) Risks & Limitations
+## 7) 关键总结
 
-- **Small sample size**: this is an MVP teaching set, not a benchmark suite.
-- **Subjectivity**: manual judging includes personal preferences.
-- **No statistical significance**: results are observational, not inferential.
-- **Teaching purpose only**: do not treat this document as production evaluation guidance.
-- **Prompt dependence**: different domains/tasks may show different bias patterns.
+1. 成对评测通常更适合**比较**任务，因为它避免了不稳定的绝对分校准问题。
+2. 绝对分仍有用，但可能漂移并掩盖细微偏好差异。
+3. 评判者（人工或 LLM）可能过度偏好冗长答案，即使附加价值很小。
+4. 评判者可能受答案位置影响（首位/左偏），因此 AB/BA 控制很重要。
+5. 评判者可能奖励“AI 风格精致”的答案多于实际实用性。
+6. 作为评判者的 LLM 可能继承这些偏差，因此协议设计和模型选择同等重要。
 
+---
+
+## 8) 风险与限制
+
+- **样本量小**：这是教学版 MVP，不是基准套件。
+- **主观性**：手动评判包含个人偏好。
+- **无统计显著性**：结果为观察性质，不具推断性。
+- **仅用于教学**：请勿将本文档视为生产评测指南。
+- **提示依赖**：不同领域/任务可能表现不同偏差模式。
